@@ -104,12 +104,7 @@
   </section>
 </div>
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://qnivocpvvwvqapbmcmim.supabase.co";
-const SUPABASE_KEY = "sb_publishable_CuqtaZ4CaF0P__camzkTFQ_C1UmD9l1";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const FIGMA_TEMPLATE = {
   width: 800,
   height: 712,
@@ -322,61 +317,31 @@ function fillSample(){
   setTableData('rulesTable', RULE_HEADERS, defaultRules());
 }
 
-async function saveImageDb(){
-  const rows = readTable('dbTable', DB_HEADERS)
-    .filter(row => row.product_key || row.product_group || row.flavor || row.image_url)
-    .map(row => ({
-      product_key: row.product_key || '',
-      product_group: row.product_group || '',
-      flavor: row.flavor || '',
-      image_url: row.image_url || '',
-      updated_at: new Date().toISOString()
-    }));
-
-  try{
-    const { error: deleteError } = await supabaseClient.from('image_db').delete().neq('id', 0);
-    if(deleteError) throw deleteError;
-
-    if(rows.length){
-      const { error: insertError } = await supabaseClient.from('image_db').insert(rows);
-      if(insertError) throw insertError;
-    }
-
-    toast(`이미지 DB ${rows.length}개 업데이트 완료`);
-  }catch(error){
-    console.error(error);
-    toast('Supabase 저장 실패');
-  }
+const DB_STORAGE_KEY = 'option_image_web_image_db_v1';
+function saveImageDb(){
+  const rows = readTable('dbTable', DB_HEADERS);
+  localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(rows));
+  toast('이미지 DB 업데이트 완료');
 }
-
-async function loadSavedImageDb(){
+function loadSavedImageDb(){
   try{
-    const { data, error } = await supabaseClient
-      .from('image_db')
-      .select('product_key, product_group, flavor, image_url')
-      .order('id', { ascending: true });
-
-    if(error) throw error;
-    return Array.isArray(data) ? data : [];
-  }catch(error){
-    console.error(error);
-    toast('Supabase 불러오기 실패');
-    return null;
-  }
+    const raw = localStorage.getItem(DB_STORAGE_KEY);
+    if(!raw) return null;
+    const rows = JSON.parse(raw);
+    return Array.isArray(rows) ? rows : null;
+  }catch(e){ return null; }
 }
 function syncToolbarByTab(){
   const isDb = !$('#dbPanel').classList.contains('hidden');
   $('#dbUpdateBtn').classList.toggle('hidden', !isDb);
 }
-async function initApp(){
+function initApp(){
   setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'옵션구성', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
-
-  const savedDb = await loadSavedImageDb();
-  setTableData('dbTable', DB_HEADERS, savedDb && savedDb.length ? savedDb : [
+  const savedDb = loadSavedImageDb();
+  setTableData('dbTable', DB_HEADERS, savedDb || [
     {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:''},
     {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:''}
   ]);
-
   setTableData('rulesTable', RULE_HEADERS, defaultRules());
   syncToolbarByTab();
 }
