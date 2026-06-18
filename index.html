@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>공구 옵션이미지 제작 BETA</title>
+  <style>
+    :root{
+      --black:#000;
+      --line:#e6e6e6;
+      --grid:#ececec;
+      --muted:#8a8f98;
+      --bg:#f5f6f8;
+      --white:#fff;
+      --panel:#fff;
+      --soft:#f7f8fa;
+      --blue:#168BFF;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Arial,'Pretendard','Noto Sans KR',sans-serif;color:#101114}
+    .app{max-width:1920px;margin:0 auto;min-height:100vh;background:var(--bg)}
+    .top{height:116px;display:flex;align-items:center;justify-content:space-between;padding:0 44px;border-bottom:1px solid var(--line);background:#fff}
+    .brand{font-weight:900;font-size:30px;letter-spacing:-.05em;display:flex;align-items:flex-start;gap:8px}.brand small{font-size:12px;margin-top:6px;padding:3px 7px;border-radius:999px;background:#f0f1f3;color:#555;letter-spacing:0}
+    .btn{border:0;border-radius:10px;background:#000;color:#fff;font-weight:900;font-size:19px;padding:16px 24px;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.14)}.btn:active{transform:translateY(1px)}
+    .tabs{height:62px;border-bottom:1px solid var(--line);display:flex;align-items:end;padding-left:44px;gap:10px;background:#fff}.tab{font-weight:800;font-size:17px;padding:14px 22px 16px;border:1px solid transparent;border-bottom:0;border-radius:12px 12px 0 0;cursor:pointer;color:#60646c}.tab.active{background:#000;color:#fff;border-color:#000}
+    .toolbar{height:62px;display:flex;align-items:center;gap:10px;padding:0 44px;border-bottom:1px solid var(--line);background:#fff}.mini{border:1px solid #ddd;background:#fff;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer}.mini:hover{border-color:#111}.hint{font-size:13px;color:#777;margin-left:8px}
+    .sheet-wrap{margin:28px 44px 0;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 8px 26px rgba(0,0,0,.035)}.sheet-scroll{overflow:auto}.sheet{width:100%;border-collapse:collapse;table-layout:fixed}.sheet th,.sheet td{border-bottom:1px solid var(--grid);min-height:44px;height:44px;text-align:center;vertical-align:middle;padding:0 10px;white-space:nowrap}
+    .sheet th.select-col,.sheet td.select-col{width:48px;padding:0}.row-check,.head-check{width:16px;height:16px;accent-color:#000;cursor:pointer}.sheet th{font-size:15px;font-weight:900;background:#fbfbfc;color:#151515;border-bottom:1px solid #d9d9d9}.sheet td{font-size:15px;color:#111}.sheet tbody tr:hover td{background:#fcfcfc}.sheet td[contenteditable="true"]{outline:none}.sheet td[contenteditable="true"]:focus{background:#fff7cc;box-shadow:inset 0 0 0 2px #111}
+    #optionsTable td:nth-child(10),#optionsTable td:nth-child(11){white-space:normal;text-align:left;line-height:1.35;word-break:break-word;overflow-wrap:anywhere;padding-top:8px;padding-bottom:8px;height:auto;min-height:44px}
+    #rulesTable td:nth-child(4){white-space:normal;text-align:left;line-height:1.35;word-break:break-word;overflow-wrap:anywhere;padding-top:8px;padding-bottom:8px;height:auto;min-height:44px}
+    .pagination{height:58px;display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px solid var(--line);background:#fff}.page-btn{min-width:34px;height:34px;border:1px solid #ddd;background:#fff;border-radius:8px;font-weight:900;cursor:pointer}.page-btn.active{background:#000;color:#fff;border-color:#000}.page-btn:disabled{opacity:.35;cursor:default}.hidden{display:none!important}
+    .results{margin:24px 44px 48px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 8px 26px rgba(0,0,0,.035)}.results-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.results-title{font-weight:900;font-size:20px}.cards{min-height:360px;border:1px dashed #d7dbe2;border-radius:14px;padding:24px;display:flex;flex-wrap:wrap;gap:24px;background:#fcfcfd}.cards:empty:before{content:'이미지 생성 버튼을 누르면 결과가 여기에 표시됩니다';margin:auto;color:#8a8f98;font-weight:700}.preview-card{background:#fff;border:1px solid #e1e4e8;border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,.04)}.preview-card canvas{width:400px;height:auto;max-height:720px;display:block;background:#fff;border-radius:8px}.preview-name{font-weight:900;margin:0 0 10px;font-size:14px}.download{margin-top:12px;width:100%;border:1px solid #111;border-radius:9px;background:#fff;padding:10px;font-weight:900;cursor:pointer}.download:hover{background:#000;color:#fff}
+    .toast{position:fixed;right:24px;bottom:24px;background:#000;color:#fff;padding:14px 18px;border-radius:10px;font-weight:900;display:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">공구 옵션이미지 제작<small>BETA</small></div>
+    <button class="btn" id="generateBtn">이미지 생성</button>
+  </header>
+
+  <nav class="tabs">
+    <div class="tab active" data-tab="options">옵션입력</div>
+    <div class="tab" data-tab="db">이미지 DB</div>
+    <div class="tab" data-tab="rules">LAYOUT_RULE</div>
+  </nav>
+
+  <div class="toolbar">
+    <button class="mini" id="addRowBtn">행 추가</button>
+    <button class="mini" id="deleteRowBtn">선택 행 삭제</button>
+    <button class="mini" id="clearAllBtn">전체 삭제</button>
+    <button class="mini" id="clearBtn">빈 행 정리</button>
+    <button class="mini" id="sampleBtn">샘플 채우기</button>
+    <button class="mini hidden" id="dbUpdateBtn">업데이트</button>
+    <span class="hint">셀 클릭해서 직접 입력. composition_parse 예: 통살:떡볶이x5,통살:데리야끼x5</span>
+  </div>
+
+  <section id="optionsPanel" class="sheet-wrap">
+    <div class="sheet-scroll">
+    <table class="sheet" id="optionsTable">
+      <colgroup>
+        <col style="width:48px"><col style="width:130px"><col style="width:120px"><col style="width:180px"><col style="width:230px">
+        <col style="width:150px"><col style="width:170px"><col style="width:170px"><col style="width:170px">
+        <col style="width:260px"><col style="width:auto">
+      </colgroup>
+      <thead><tr>
+        <th class="select-col"><input type="checkbox" class="head-check" data-table="optionsTable"></th><th>option_code</th><th>color</th><th>sub_text</th><th>title_text</th><th>original_price_label</th><th>origin_price</th><th>sale_price_label</th><th>sale_price</th><th>composition_display</th><th>composition_parse</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+    <div class="pagination" id="optionsPagination"></div>
+  </section>
+
+  <section id="dbPanel" class="sheet-wrap hidden">
+    <div class="sheet-scroll">
+    <table class="sheet" id="dbTable">
+      <colgroup><col style="width:48px"><col style="width:200px"><col style="width:220px"><col style="width:220px"><col style="width:auto"></colgroup>
+      <thead><tr><th class="select-col"><input type="checkbox" class="head-check" data-table="dbTable"></th><th>product_key</th><th>product_group</th><th>flavor</th><th>image_url</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+    <div class="pagination" id="dbPagination"></div>
+  </section>
+
+  <section id="rulesPanel" class="sheet-wrap hidden">
+    <div class="sheet-scroll">
+    <table class="sheet" id="rulesTable">
+      <colgroup><col style="width:48px"><col style="width:160px"><col style="width:220px"><col style="width:auto"></colgroup>
+      <thead><tr><th class="select-col"><input type="checkbox" class="head-check" data-table="rulesTable"></th><th>total_qty</th><th>row_rule</th><th>memo</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+    <div class="pagination" id="rulesPagination"></div>
+  </section>
+
+  <section class="results" id="results">
+    <div class="results-head">
+      <div class="results-title">생성 결과</div>
+      <button class="mini" id="downloadAllBtn">PNG 다운로드</button>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const FIGMA_TEMPLATE = {
+  width: 800,
+  height: 712,
+  background: '#ffffff',
+  titleBox: { x: 50, y: 4, w: 700, h: 146, r: 22 },
+  subText: { x: 400, y: 58, maxW: 620, size: 32, weight: '400', align: 'center' },
+  titleText: { x: 400, y: 106, maxW: 620, size: 44, weight: '800', align: 'center' },
+  imageArea: { x: 70, y: 175, w: 660, h: 290 },
+  priceBox: { x: 50, y: 490, w: 700, h: 196, r: 20 },
+  originLabel: { x: 90, y: 544, size: 22, weight: '400', color: '#888888' },
+  saleLabel: { x: 90, y: 595, size: 40, weight: '800', color: '#000000' },
+  originPrice: { x: 710, y: 544, size: 24, weight: '400', color: '#888888', align: 'right', strikeY: 536 },
+  salePrice: { x: 710, y: 598, size: 42, weight: '800', align: 'right' },
+  divider: { x1: 50, y: 622, x2: 750, color: '#c7c7c7' },
+  composition: { x: 90, y: 654, size: 20, weight: '400', color: '#777777' }
+};
+const TEMPLATE_W = FIGMA_TEMPLATE.width;
+const TEMPLATE_H = FIGMA_TEMPLATE.height;
+const OVERLAP_X = 30;
+const OVERLAP_Y = 30;
+const TARGET_BLOCK_HEIGHT_RATIO = 0.82;
+const OPTION_HEADERS = ['option_code','color','sub_text','title_text','original_price_label','origin_price','sale_price_label','sale_price','composition_display','composition_parse'];
+const DB_HEADERS = ['product_key','product_group','flavor','image_url'];
+const RULE_HEADERS = ['total_qty','row_rule','memo'];
+const PAGE_SIZE = 15;
+const tablePage = { optionsTable: 1, dbTable: 1, rulesTable: 1 };
+let selectedRow = null;
+const imageCache = new Map();
+const generated = [];
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => [...document.querySelectorAll(sel)];
+
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',1800); }
+function bindRowSelect(tr, tableId){
+  tr.addEventListener('focusin',()=>{ selectedRow={tableId,tr}; });
+  tr.addEventListener('click',e=>{ if(!e.target.classList.contains('row-check')) selectedRow={tableId,tr}; });
+}
+
+function getHeadersByTableId(tableId){
+  if(tableId==='optionsTable') return OPTION_HEADERS;
+  if(tableId==='dbTable') return DB_HEADERS;
+  return RULE_HEADERS;
+}
+function getTableIdFromCell(td){
+  return td.closest('table')?.id || '';
+}
+function getHeaderNameFromCell(td){
+  const tr=td.parentElement;
+  const tableId=getTableIdFromCell(td);
+  const headers=getHeadersByTableId(tableId);
+  const colIndex=[...tr.children].indexOf(td)-1;
+  return headers[colIndex] || '';
+}
+function formatCurrencyText(value){
+  const digits=String(value || '').replace(/[^0-9]/g,'');
+  if(!digits) return String(value || '').trim();
+  return `${Number(digits).toLocaleString('ko-KR')}원`;
+}
+function formatPriceCell(td){
+  const header=getHeaderNameFromCell(td);
+  if(header==='origin_price' || header==='sale_price'){
+    td.innerText=formatCurrencyText(td.innerText);
+  }
+}
+function placeCaretEnd(el){
+  el.focus();
+  const range=document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+function moveToNextEditableCell(td){
+  const table=td.closest('table');
+  if(!table) return;
+  const cells=[...table.querySelectorAll('tbody td[contenteditable="true"]')];
+  const currentIndex=cells.indexOf(td);
+  const next=cells[currentIndex+1];
+  if(!next) return;
+  const tableId=table.id;
+  const rowIndex=getRows(tableId).indexOf(next.parentElement);
+  if(rowIndex >= 0){
+    tablePage[tableId]=Math.floor(rowIndex / PAGE_SIZE) + 1;
+    updateTablePage(tableId);
+  }
+  requestAnimationFrame(()=>placeCaretEnd(next));
+}
+function handleCellKeydown(e){
+  if(e.key !== 'Enter') return;
+  e.preventDefault();
+  formatPriceCell(e.currentTarget);
+  moveToNextEditableCell(e.currentTarget);
+}
+
+function getNextOptionCode(){
+  const nums=getRows('optionsTable').map(tr=>{
+    const txt=(tr.querySelectorAll('td')[1]?.innerText||'').trim();
+    const m=txt.match(/(\d+)/);
+    return m ? Number(m[1]) : 0;
+  });
+  return `SET ${String(Math.max(0,...nums)+1).padStart(3,'0')}`;
+}
+function createEmptyRow(tableId, cols, autoCode=false){
+  const tr=document.createElement('tr');
+  const checkTd=document.createElement('td');
+  checkTd.className='select-col';
+  checkTd.innerHTML=`<input type="checkbox" class="row-check" data-table="${tableId}">`;
+  tr.appendChild(checkTd);
+  for(let c=0;c<cols;c++){
+    const td=document.createElement('td');
+    td.contentEditable='true';
+    td.addEventListener('keydown', handleCellKeydown);
+    td.addEventListener('blur', () => formatPriceCell(td));
+    tr.appendChild(td);
+  }
+
+  if(tableId==='optionsTable' && autoCode){
+    tr.children[1].innerText=getNextOptionCode(); // option_code
+    tr.children[5].innerText='정상가';          // original_price_label
+    tr.children[7].innerText='단독 최저가';     // sale_price_label
+  }
+
+  bindRowSelect(tr, tableId);
+  return tr;
+}
+function getRows(tableId){ return [...document.querySelectorAll(`#${tableId} tbody tr`)]; }
+function ensureMinRows(tableId, cols){
+  const tbody=document.querySelector(`#${tableId} tbody`);
+  while(getRows(tableId).length < PAGE_SIZE){ tbody.appendChild(createEmptyRow(tableId, cols, false)); }
+}
+function resetHeaderCheck(tableId){ const h=document.querySelector(`.head-check[data-table="${tableId}"]`); if(h) h.checked=false; }
+function makeRows(tableId, cols, count){
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  for(let r=0;r<count;r++) tbody.appendChild(createEmptyRow(tableId, cols));
+  updateTablePage(tableId);
+}
+function activeTable(){ if(!$('#optionsPanel').classList.contains('hidden')) return {id:'optionsTable', cols:OPTION_HEADERS.length, headers:OPTION_HEADERS}; if(!$('#dbPanel').classList.contains('hidden')) return {id:'dbTable', cols:DB_HEADERS.length, headers:DB_HEADERS}; return {id:'rulesTable', cols:RULE_HEADERS.length, headers:RULE_HEADERS}; }
+function readTable(tableId, headers){ return getRows(tableId).map(tr=>{ const cells=[...tr.children].slice(1); const obj={}; headers.forEach((h,i)=>obj[h]=(cells[i]?.innerText||'').trim()); return obj; }).filter(row=>Object.values(row).some(Boolean)); }
+function setTableData(tableId, headers, rows){
+  const tbody=document.querySelector(`#${tableId} tbody`); tbody.innerHTML='';
+  rows.forEach(row=>{ const tr=createEmptyRow(tableId, headers.length, false); headers.forEach((h,i)=>{ tr.children[i+1].innerText=row[h]||''; }); tbody.appendChild(tr); });
+  ensureMinRows(tableId, headers.length);
+  tablePage[tableId]=1;
+  resetHeaderCheck(tableId);
+  updateTablePage(tableId);
+}
+function updateTablePage(tableId){
+  const rows=getRows(tableId);
+  const pageCount=Math.max(1, Math.ceil(rows.length/PAGE_SIZE));
+  tablePage[tableId]=Math.min(Math.max(1, tablePage[tableId]||1), pageCount);
+  const page=tablePage[tableId];
+  rows.forEach((tr,i)=>{ tr.style.display=(i >= (page-1)*PAGE_SIZE && i < page*PAGE_SIZE) ? '' : 'none'; });
+  renderPagination(tableId);
+}
+function renderPagination(tableId){
+  const wrap = tableId==='optionsTable' ? $('#optionsPagination') : tableId==='dbTable' ? $('#dbPagination') : $('#rulesPagination');
+  if(!wrap) return;
+  const rows=getRows(tableId);
+  const pageCount=Math.max(1, Math.ceil(rows.length/PAGE_SIZE));
+  const page=tablePage[tableId]||1;
+  wrap.innerHTML='';
+  const prev=document.createElement('button'); prev.className='page-btn'; prev.textContent='<'; prev.disabled=page<=1; prev.onclick=()=>{ tablePage[tableId]=page-1; updateTablePage(tableId); };
+  wrap.appendChild(prev);
+  for(let i=1;i<=pageCount;i++){
+    const b=document.createElement('button'); b.className='page-btn'+(i===page?' active':''); b.textContent=i; b.onclick=()=>{ tablePage[tableId]=i; updateTablePage(tableId); };
+    wrap.appendChild(b);
+  }
+  const next=document.createElement('button'); next.className='page-btn'; next.textContent='>'; next.disabled=page>=pageCount; next.onclick=()=>{ tablePage[tableId]=page+1; updateTablePage(tableId); };
+  wrap.appendChild(next);
+}
+function addActiveRow(){
+  const t=activeTable();
+  const tbody=document.querySelector(`#${t.id} tbody`);
+  tbody.appendChild(createEmptyRow(t.id,t.cols,true));
+  tablePage[t.id]=Math.ceil(getRows(t.id).length/PAGE_SIZE);
+  resetHeaderCheck(t.id);
+  updateTablePage(t.id);
+}
+function deleteActiveRow(){
+  const t=activeTable();
+  const checked=getRows(t.id).filter(tr=>tr.querySelector('.row-check')?.checked);
+  const targets=checked.length ? checked : [];
+  if(!targets.length){ toast('삭제할 행을 체크해줘'); return; }
+  targets.forEach(tr=>tr.remove());
+  selectedRow=null;
+  ensureMinRows(t.id,t.cols);
+  resetHeaderCheck(t.id);
+  updateTablePage(t.id);
+  toast(`${targets.length}개 행 삭제`);
+}
+function clearAllActive(){
+  const t=activeTable();
+  document.querySelector(`#${t.id} tbody`).innerHTML='';
+  ensureMinRows(t.id,t.cols);
+  tablePage[t.id]=1;
+  selectedRow=null;
+  resetHeaderCheck(t.id);
+  updateTablePage(t.id);
+  toast('전체 삭제 완료');
+}
+
+function fillSample(){
+  setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'옵션구성', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
+  setTableData('dbTable', DB_HEADERS, [
+    {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:''},
+    {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:''}
+  ]);
+  setTableData('rulesTable', RULE_HEADERS, defaultRules());
+}
+
+const DB_STORAGE_KEY = 'option_image_web_image_db_v1';
+function saveImageDb(){
+  const rows = readTable('dbTable', DB_HEADERS);
+  localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(rows));
+  toast('이미지 DB 업데이트 완료');
+}
+function loadSavedImageDb(){
+  try{
+    const raw = localStorage.getItem(DB_STORAGE_KEY);
+    if(!raw) return null;
+    const rows = JSON.parse(raw);
+    return Array.isArray(rows) ? rows : null;
+  }catch(e){ return null; }
+}
+function syncToolbarByTab(){
+  const isDb = !$('#dbPanel').classList.contains('hidden');
+  $('#dbUpdateBtn').classList.toggle('hidden', !isDb);
+}
+function initApp(){
+  setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'옵션구성', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
+  const savedDb = loadSavedImageDb();
+  setTableData('dbTable', DB_HEADERS, savedDb || [
+    {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:''},
+    {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:''}
+  ]);
+  setTableData('rulesTable', RULE_HEADERS, defaultRules());
+  syncToolbarByTab();
+}
+
+function parseComposition(str){
+  if(!str) return [];
+  const out=[];
+  str.split(',').forEach(part=>{
+    const raw=part.trim(); if(!raw) return;
+    const m=raw.match(/(.+?)x(\d+)$/i);
+    if(m){ out.push({key:m[1].trim(), count:Number(m[2])}); }
+    else { out.push({key:raw, count:1}); }
+  });
+  return out;
+}
+function defaultRules(){
+  return [
+    {total_qty:'1', row_rule:'1', memo:'1개'},
+    {total_qty:'2', row_rule:'2', memo:'2개'},
+    {total_qty:'3', row_rule:'3', memo:'3개'},
+    {total_qty:'4', row_rule:'4', memo:'4개'},
+    {total_qty:'5', row_rule:'5', memo:'5개'},
+    {total_qty:'6', row_rule:'3,3', memo:'2줄'},
+    {total_qty:'7', row_rule:'4,3', memo:'2줄'},
+    {total_qty:'8', row_rule:'4,4', memo:'2줄'},
+    {total_qty:'9', row_rule:'5,4', memo:'2줄'},
+    {total_qty:'10', row_rule:'5,5', memo:'2줄'},
+    {total_qty:'11', row_rule:'6,5', memo:'2줄'},
+    {total_qty:'12', row_rule:'6,6', memo:'2줄'},
+    {total_qty:'13', row_rule:'7,6', memo:'2줄'},
+    {total_qty:'14', row_rule:'7,7', memo:'2줄'},
+    {total_qty:'15', row_rule:'8,7', memo:'2줄'},
+    {total_qty:'16', row_rule:'8,8', memo:'2줄'},
+    {total_qty:'20', row_rule:'10,10', memo:'2줄'}
+  ];
+}
+function getRuleForTotal(total){
+  const rules = readTable('rulesTable', RULE_HEADERS);
+  const matched = rules.find(r => Number(r.total_qty) === Number(total));
+  if(matched && matched.row_rule){
+    const rows = String(matched.row_rule).split(',').map(v=>Number(v.trim())).filter(Boolean);
+    if(rows.length) return rows;
+  }
+  if(total <= 0) return [];
+  if(total <= 5) return [total];
+  const top = Math.ceil(total/2);
+  return [top, total-top];
+}
+
+function hex(hex, fallback){ if(!hex) return fallback; const v=String(hex).trim(); return /^#[0-9a-f]{6}$/i.test(v) ? v : fallback; }
+function loadImage(src){
+  return new Promise((resolve,reject)=>{
+    if(!src) return reject(new Error('no src'));
+    if(imageCache.has(src)) return resolve(imageCache.get(src));
+    const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ imageCache.set(src,img); resolve(img); }; img.onerror=reject; img.src=src;
+  });
+}
+
+async function resolveImages(option, db){
+  const dbMap = new Map(db.map(x=>[x.product_key, x]));
+  const comps = parseComposition(option.composition_parse);
+  const list=[];
+  comps.forEach(c=>{ const item=dbMap.get(c.key); for(let i=0;i<c.count;i++) list.push({key:c.key, url:item?.image_url||'', group:item?.product_group||'', flavor:item?.flavor||''}); });
+  return list;
+}
+
+function roundRect(ctx,x,y,w,h,r){ const rr=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath(); }
+function fitText(ctx, text, maxWidth, startSize, weight='800'){ let size=startSize; do{ ctx.font=`${weight} ${size}px Arial, Pretendard, sans-serif`; if(ctx.measureText(text).width<=maxWidth) return size; size-=2; }while(size>16); return size; }
+function wrapTextLines(ctx, text, maxWidth){
+  text = String(text || '').trim();
+  if(!text) return [''];
+  const hardLines = text.split(/\n/);
+  const lines = [];
+  for(const hardLine of hardLines){
+    let current = '';
+    const chars = [...hardLine];
+    for(const ch of chars){
+      const test = current + ch;
+      if(current && ctx.measureText(test).width > maxWidth){
+        lines.push(current.trimEnd());
+        current = ch;
+      } else {
+        current = test;
+      }
+    }
+    lines.push(current.trimEnd());
+  }
+  return lines.length ? lines : [''];
+}
+function drawWrappedText(ctx, lines, x, y, lineHeight){
+  lines.forEach((line, i) => ctx.fillText(line, x, y + i * lineHeight));
+}
+
+async function drawTemplate(option, db){
+  const t = FIGMA_TEMPLATE;
+  const measureCanvas=document.createElement('canvas');
+  const measureCtx=measureCanvas.getContext('2d');
+  const compLineHeight = 28;
+  const compMaxWidth = 620;
+  measureCtx.font=`${t.composition.weight} ${t.composition.size}px Arial, Pretendard, sans-serif`;
+  const compLines = wrapTextLines(measureCtx, option.composition_display || '', compMaxWidth);
+  const extraHeight = Math.max(0, compLines.length - 1) * compLineHeight;
+  const canvas=document.createElement('canvas');
+  canvas.width=t.width;
+  canvas.height=t.height + extraHeight;
+  const ctx=canvas.getContext('2d');
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=t.background;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Figma OPTION_TEMPLATE coded guide
+  ctx.fillStyle='#000000';
+  roundRect(ctx,t.titleBox.x,t.titleBox.y,t.titleBox.w,t.titleBox.h,t.titleBox.r);
+  ctx.fill();
+
+  ctx.textAlign=t.subText.align;
+  ctx.fillStyle=hex(option.color,'#ffffff');
+  ctx.font=`${t.subText.weight} ${t.subText.size}px Arial, Pretendard, sans-serif`;
+  ctx.fillText(option.sub_text||'',t.subText.x,t.subText.y);
+
+  const title=option.title_text||'';
+  const titleSize=fitText(ctx,title,t.titleText.maxW,t.titleText.size,t.titleText.weight);
+  ctx.fillStyle='#ffffff';
+  ctx.textAlign=t.titleText.align;
+  ctx.font=`${t.titleText.weight} ${titleSize}px Arial, Pretendard, sans-serif`;
+  ctx.fillText(title,t.titleText.x,t.titleText.y);
+
+  await renderImagesCanvas(ctx, t.imageArea, option, db);
+
+  const b=t.priceBox;
+  ctx.fillStyle='#f4f4f4';
+  roundRect(ctx,b.x,b.y,b.w,b.h + extraHeight,b.r);
+  ctx.fill();
+
+  ctx.textAlign='left';
+  ctx.fillStyle=t.originLabel.color;
+  ctx.font=`${t.originLabel.weight} ${t.originLabel.size}px Arial, Pretendard, sans-serif`;
+  ctx.fillText(option.original_price_label||'', t.originLabel.x, t.originLabel.y);
+
+  ctx.fillStyle=t.saleLabel.color;
+  ctx.font=`${t.saleLabel.weight} ${t.saleLabel.size}px Arial, Pretendard, sans-serif`;
+  ctx.fillText(option.sale_price_label||'', t.saleLabel.x, t.saleLabel.y);
+
+  ctx.textAlign=t.originPrice.align;
+  ctx.fillStyle=t.originPrice.color;
+  ctx.font=`${t.originPrice.weight} ${t.originPrice.size}px Arial, Pretendard, sans-serif`;
+  const op=option.origin_price||'';
+  ctx.fillText(op, t.originPrice.x, t.originPrice.y);
+  const opM=ctx.measureText(op);
+  ctx.strokeStyle=t.originPrice.color;
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(t.originPrice.x-opM.width, t.originPrice.strikeY);
+  ctx.lineTo(t.originPrice.x, t.originPrice.strikeY);
+  ctx.stroke();
+
+  ctx.fillStyle=hex(option.color,'#000000');
+  ctx.font=`${t.salePrice.weight} ${t.salePrice.size}px Arial, Pretendard, sans-serif`;
+  ctx.textAlign=t.salePrice.align;
+  ctx.fillText(option.sale_price||'', t.salePrice.x, t.salePrice.y);
+
+  ctx.strokeStyle=t.divider.color;
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(t.divider.x1,t.divider.y);
+  ctx.lineTo(t.divider.x2,t.divider.y);
+  ctx.stroke();
+
+  ctx.textAlign='left';
+  ctx.fillStyle=t.composition.color;
+  ctx.font=`${t.composition.weight} ${t.composition.size}px Arial, Pretendard, sans-serif`;
+  drawWrappedText(ctx, compLines, t.composition.x, t.composition.y, compLineHeight);
+  return canvas;
+}
+
+async function renderImagesCanvas(ctx, area, option, db){
+  const images = await resolveImages(option, db);
+  if(!images.length) return;
+  let rows = getRuleForTotal(images.length);
+  if(!rows.length) rows=[images.length];
+  const rowCount=rows.length; const maxCountInRow=Math.max(...rows); const verticalOverlap=rowCount>1 ? (maxCountInRow>=10?0:OVERLAP_Y) : 0;
+  const targetBlockHeight=area.h*TARGET_BLOCK_HEIGHT_RATIO; const baseImageHeight=(targetBlockHeight + verticalOverlap*(rowCount-1))/rowCount;
+  let imageIndex=0; const allRows=[];
+  for(const count of rows){ const nodes=[]; for(let i=0;i<count;i++){ const data=images[imageIndex++]; if(!data) continue; try{ const img=await loadImage(data.url); const ratio=img.width/img.height; nodes.push({img, key:data.key, w:baseImageHeight*ratio, h:baseImageHeight}); }catch(e){ nodes.push({img:null, key:data?.key||'NO IMAGE', w:baseImageHeight*.7, h:baseImageHeight}); } } allRows.push(nodes); }
+  const rowWidth = nodes => nodes.reduce((s,n)=>s+n.w,0)-OVERLAP_X*(nodes.length-1);
+  const maxRowWidth=Math.max(...allRows.map(rowWidth),1); let scale=1; if(maxRowWidth>area.w) scale=area.w/maxRowWidth;
+  const scaledBlockHeight=(baseImageHeight*scale)*rowCount-(verticalOverlap*scale)*(rowCount-1); if(scaledBlockHeight>area.h) scale*=area.h/scaledBlockHeight;
+  allRows.forEach(row=>row.forEach(n=>{n.w*=scale;n.h*=scale;}));
+  const finalImageHeight=baseImageHeight*scale; const finalOverlapY=verticalOverlap*scale; const totalBlockHeight=finalImageHeight*rowCount-finalOverlapY*(rowCount-1); let y=area.y+(area.h-totalBlockHeight)/2;
+  for(const row of allRows){ const totalW=rowWidth(row); let x=area.x+(area.w-totalW)/2; for(const n of row){ if(n.img){ ctx.drawImage(n.img,x,y,n.w,n.h); } else { ctx.fillStyle='#ffe1e1'; roundRect(ctx,x,y,n.w,n.h,8); ctx.fill(); ctx.fillStyle='#cc3333'; ctx.textAlign='center'; ctx.font='700 13px Arial'; ctx.fillText('NO IMAGE',x+n.w/2,y+n.h/2-4); ctx.fillText(n.key,x+n.w/2,y+n.h/2+14); } x+=n.w-OVERLAP_X; } y+=finalImageHeight-finalOverlapY; }
+}
+
+function readCheckedOptions(){
+  return getRows('optionsTable')
+    .filter(tr => tr.querySelector('.row-check')?.checked)
+    .map(tr => {
+      const cells=[...tr.children].slice(1);
+      const obj={};
+      OPTION_HEADERS.forEach((h,i)=>obj[h]=(cells[i]?.innerText||'').trim());
+      return obj;
+    })
+    .filter(row=>Object.values(row).some(Boolean));
+}
+function combineCanvasesVertical(canvases){
+  const combined=document.createElement('canvas');
+  combined.width=TEMPLATE_W;
+  combined.height=canvases.reduce((sum, canvas) => sum + canvas.height, 0);
+  const ctx=combined.getContext('2d');
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,combined.width,combined.height);
+  let y = 0;
+  canvases.forEach(canvas => { ctx.drawImage(canvas,0,y); y += canvas.height; });
+  return combined;
+}
+async function generate(){
+  generated.length=0; $('#cards').innerHTML='';
+  const options=readCheckedOptions(); const db=readTable('dbTable', DB_HEADERS);
+  if(!options.length){ toast('생성할 행을 체크해줘'); return; }
+  const canvases=[];
+  for(const option of options){ canvases.push(await drawTemplate(option, db)); }
+  const combined=combineCanvasesVertical(canvases);
+  generated.push({name:'option_selected_combined', canvas:combined});
+  const card=document.createElement('div');
+  card.className='preview-card';
+  const btn=document.createElement('button');
+  btn.className='download';
+  btn.textContent='PNG 다운로드';
+  btn.onclick=()=>downloadCanvas(combined, 'option_selected_combined.png');
+  card.append(combined,btn);
+  $('#cards').appendChild(card);
+  toast(`${options.length}개 옵션을 1장으로 생성 완료`);
+}
+function downloadCanvas(canvas, filename){ const a=document.createElement('a'); a.download=filename; a.href=canvas.toDataURL('image/png'); a.click(); }
+function downloadAll(){ if(!generated.length){ toast('생성된 이미지 없음'); return; } downloadCanvas(generated[0].canvas, `${generated[0].name}.png`); }
+
+$$('.tab').forEach(tab=>tab.addEventListener('click',()=>{ $$('.tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active'); const key=tab.dataset.tab; $('#optionsPanel').classList.toggle('hidden', key!=='options'); $('#dbPanel').classList.toggle('hidden', key!=='db'); $('#rulesPanel').classList.toggle('hidden', key!=='rules'); syncToolbarByTab(); }));
+$('#addRowBtn').onclick=addActiveRow;
+$('#deleteRowBtn').onclick=deleteActiveRow;
+$('#clearAllBtn').onclick=clearAllActive;
+$$('.head-check').forEach(ch=>ch.addEventListener('change',()=>{
+  const tableId=ch.dataset.table;
+  const page=tablePage[tableId]||1;
+  getRows(tableId).forEach((tr,i)=>{
+    if(i >= (page-1)*PAGE_SIZE && i < page*PAGE_SIZE) tr.querySelector('.row-check').checked=ch.checked;
+  });
+}));
+$('#clearBtn').onclick=()=>{ const t=activeTable(); const headers=t.headers; const rows=readTable(t.id, headers); setTableData(t.id, headers, rows); resetHeaderCheck(t.id); };
+$('#sampleBtn').onclick=fillSample;
+$('#dbUpdateBtn').onclick=saveImageDb;
+$('#generateBtn').onclick=generate;
+$('#downloadAllBtn').onclick=downloadAll;
+
+initApp();
+</script>
+</body>
+</html>
