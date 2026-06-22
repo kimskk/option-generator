@@ -15,6 +15,7 @@
       --panel:#fff;
       --soft:#f7f8fa;
       --blue:#168BFF;
+      --point:#FF692E;
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);font-family:Arial,'Pretendard','Noto Sans KR',sans-serif;color:#101114;overflow-x:auto}
@@ -22,13 +23,13 @@
     .top{height:92px;display:flex;align-items:center;justify-content:space-between;padding:0 36px;border-bottom:1px solid var(--line);background:#fff}
     .brand{font-weight:900;font-size:28px;letter-spacing:-.05em;display:flex;align-items:flex-start;gap:8px}.brand small{font-size:12px;margin-top:5px;padding:3px 7px;border-radius:999px;background:#f0f1f3;color:#555;letter-spacing:0}
     .btn{border:0;border-radius:10px;background:#000;color:#fff;font-weight:900;font-size:19px;padding:16px 24px;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.14)}.btn:active{transform:translateY(1px)}
-    .tabs{height:54px;border-bottom:1px solid var(--line);display:flex;align-items:end;padding-left:36px;gap:8px;background:#fff}.tab{font-weight:800;font-size:16px;padding:12px 20px 14px;border:1px solid transparent;border-bottom:0;border-radius:12px 12px 0 0;cursor:pointer;color:#60646c;white-space:nowrap}.tab.active{background:#000;color:#fff;border-color:#000}
-    .toolbar{min-height:56px;display:flex;align-items:center;gap:8px;padding:8px 36px;border-bottom:1px solid var(--line);background:#fff;overflow-x:auto}.mini{height:38px;min-width:86px;flex:0 0 auto;border:1px solid #ddd;background:#fff;border-radius:9px;padding:0 14px;font-weight:800;cursor:pointer;white-space:nowrap;line-height:38px}.mini:hover{border-color:#111}.hint{font-size:13px;color:#777;margin-left:8px;white-space:nowrap;flex:0 0 auto}#deleteRowBtn{min-width:118px}#clearAllBtn{min-width:92px}#clearBtn{min-width:92px}#sampleBtn{min-width:92px}#dbUpdateBtn{min-width:92px}
+    .tabs{height:54px;border-bottom:1px solid var(--line);display:flex;align-items:end;padding-left:36px;gap:8px;background:#fff}.tab{font-weight:800;font-size:16px;padding:12px 20px 14px;border:1px solid transparent;border-bottom:0;border-radius:12px 12px 0 0;cursor:pointer;color:#60646c;white-space:nowrap}.tab.active{background:var(--point);color:#fff;border-color:var(--point)}
+    .toolbar{min-height:56px;display:flex;align-items:center;gap:8px;padding:8px 36px;border-bottom:1px solid var(--line);background:#fff;overflow-x:auto}.mini{height:38px;min-width:86px;flex:0 0 auto;border:1px solid #ddd;background:#fff;border-radius:9px;padding:0 14px;font-weight:800;cursor:pointer;white-space:nowrap;line-height:38px}.mini:hover{border-color:var(--point);color:var(--point)}.hint{font-size:13px;color:#777;margin-left:8px;white-space:nowrap;flex:0 0 auto}#deleteRowBtn{min-width:118px}#clearAllBtn{min-width:92px}#clearBtn{min-width:92px}#sampleBtn{min-width:92px}#dbUpdateBtn{min-width:92px}.mini.update-action{background:var(--point);border-color:var(--point);color:#fff}.mini.update-action:hover{filter:brightness(.96);color:#fff}
     .sheet-wrap{margin:16px 36px 0;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 8px 26px rgba(0,0,0,.035)}.sheet-scroll{overflow:auto}.sheet{width:100%;border-collapse:collapse;table-layout:fixed}.sheet th,.sheet td{border-bottom:1px solid var(--grid);min-height:44px;height:44px;text-align:center;vertical-align:middle;padding:0 10px;white-space:nowrap}#optionsTable{min-width:1840px}#dbTable{min-width:1160px}#rulesTable{min-width:920px}
-    .sheet th.select-col,.sheet td.select-col{width:48px;padding:0}.row-check,.head-check{width:16px;height:16px;accent-color:#000;cursor:pointer}.sheet th{font-size:15px;font-weight:900;background:#fbfbfc;color:#151515;border-bottom:1px solid #d9d9d9}.sheet td{font-size:15px;color:#111}.sheet tbody tr:hover td{background:#fcfcfc}.sheet td[contenteditable="true"]{outline:none}.sheet td[contenteditable="true"]:focus{background:#f2f4f7;box-shadow:inset 0 0 0 2px #b8c0cc}
+    .sheet th.select-col,.sheet td.select-col{width:48px;padding:0}.row-check,.head-check{width:16px;height:16px;accent-color:var(--point);cursor:pointer}.sheet th{font-size:15px;font-weight:900;background:#fbfbfc;color:#151515;border-bottom:1px solid #d9d9d9}.sheet td{font-size:15px;color:#111}.sheet tbody tr:hover td{background:#fcfcfc}.sheet td[contenteditable="true"]{outline:none}.sheet td[contenteditable="true"]:focus{background:#f2f4f7;box-shadow:inset 0 0 0 2px var(--point)}
     #optionsTable th:nth-child(10),#optionsTable td:nth-child(10){min-width:360px}#optionsTable th:nth-child(11),#optionsTable td:nth-child(11){min-width:520px}#optionsTable td:nth-child(10),#optionsTable td:nth-child(11){white-space:normal;text-align:left;line-height:1.35;word-break:break-word;overflow-wrap:anywhere;padding-top:8px;padding-bottom:8px;height:auto;min-height:44px}
     #rulesTable td:nth-child(4){white-space:normal;text-align:left;line-height:1.35;word-break:break-word;overflow-wrap:anywhere;padding-top:8px;padding-bottom:8px;height:auto;min-height:44px}
-    .pagination{height:58px;display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px solid var(--line);background:#fff}.page-btn{min-width:34px;height:34px;border:1px solid #ddd;background:#fff;border-radius:8px;font-weight:900;cursor:pointer}.page-btn.active{background:#000;color:#fff;border-color:#000}.page-btn:disabled{opacity:.35;cursor:default}.hidden{display:none!important}
+    .pagination{height:58px;display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px solid var(--line);background:#fff}.page-btn{min-width:34px;height:34px;border:1px solid #ddd;background:#fff;border-radius:8px;font-weight:900;cursor:pointer}.page-btn.active{background:var(--point);color:#fff;border-color:var(--point)}.page-btn:disabled{opacity:.35;cursor:default}.hidden{display:none!important}
     .results{margin:20px 36px 48px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 8px 26px rgba(0,0,0,.035)}.results-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.results-title{font-weight:900;font-size:20px}.cards{min-height:360px;border:1px dashed #d7dbe2;border-radius:14px;padding:24px;display:flex;flex-wrap:wrap;gap:24px;background:#fcfcfd}.cards:empty:before{content:'이미지 생성 버튼을 누르면 결과가 여기에 표시됩니다';margin:auto;color:#8a8f98;font-weight:700}.preview-card{background:#fff;border:1px solid #e1e4e8;border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,.04)}.preview-card canvas{width:400px;height:auto;max-height:720px;display:block;background:#fff;border-radius:8px}.preview-name{font-weight:900;margin:0 0 10px;font-size:14px}.download{margin-top:12px;width:100%;border:1px solid #111;border-radius:9px;background:#fff;padding:10px;font-weight:900;cursor:pointer}.download:hover{background:#000;color:#fff}
     .toast{position:fixed;right:24px;bottom:24px;background:#000;color:#fff;padding:14px 18px;border-radius:10px;font-weight:900;display:none;z-index:10}
 </style>
@@ -52,7 +53,7 @@
     <button class="mini" id="clearAllBtn">전체 삭제</button>
     <button class="mini" id="clearBtn">빈 행 정리</button>
     <button class="mini" id="sampleBtn">샘플 채우기</button>
-    <button class="mini hidden" id="dbUpdateBtn">업데이트</button>
+    <button class="mini update-action hidden" id="dbUpdateBtn">업데이트</button>
     <span class="hint">셀 클릭해서 직접 입력. composition_parse 예: 통살:떡볶이x5,통살:데리야끼x5</span>
   </div>
 
@@ -143,7 +144,8 @@ const generated = [];
 const $ = sel => document.querySelector(sel);
 const $$ = sel => [...document.querySelectorAll(sel)];
 
-function toast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',1800); }
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); }
+function nowText(){ return new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', second:'2-digit' }); }
 function bindRowSelect(tr, tableId){
   tr.addEventListener('focusin',()=>{ selectedRow={tableId,tr}; });
   tr.addEventListener('click',e=>{ if(!e.target.classList.contains('row-check')) selectedRow={tableId,tr}; });
@@ -295,6 +297,7 @@ function deleteActiveRow(){
   const checked=getRows(t.id).filter(tr=>tr.querySelector('.row-check')?.checked);
   const targets=checked.length ? checked : [];
   if(!targets.length){ toast('삭제할 행을 체크해줘'); return; }
+  if(!confirm(`${targets.length}개 행을 진짜 삭제할까?`)) return;
   targets.forEach(tr=>tr.remove());
   selectedRow=null;
   ensureMinRows(t.id,t.cols);
@@ -304,6 +307,7 @@ function deleteActiveRow(){
 }
 function clearAllActive(){
   const t=activeTable();
+  if(!confirm('전체 행을 진짜 삭제할까?')) return;
   document.querySelector(`#${t.id} tbody`).innerHTML='';
   ensureMinRows(t.id,t.cols);
   tablePage[t.id]=1;
@@ -351,10 +355,10 @@ async function saveImageDb(){
     }
 
     console.log('[Supabase] image_db 저장 완료');
-    toast(`이미지 DB ${rows.length}개 업데이트 완료`);
+    toast(`이미지 DB 업데이트 완료 · ${nowText()}`);
   }catch(error){
     console.error('[Supabase] image_db 저장 실패', error);
-    toast('Supabase 저장 실패');
+    toast(`이미지 DB 업데이트 실패 · ${nowText()}`);
   }
 }
 
@@ -372,25 +376,89 @@ async function loadSavedImageDb(){
     return Array.isArray(data) ? data : [];
   }catch(error){
     console.error('[Supabase] image_db 불러오기 실패', error);
-    toast('Supabase 불러오기 실패');
+    toast('이미지 DB 불러오기 실패');
     return null;
   }
 }
+
+async function saveLayoutRules(){
+  const rows = readTable('rulesTable', RULE_HEADERS)
+    .filter(row => row.total_qty || row.row_rule || row.memo)
+    .map(row => ({
+      total_qty: row.total_qty || '',
+      row_rule: row.row_rule || '',
+      memo: row.memo || '',
+      updated_at: new Date().toISOString()
+    }));
+
+  try{
+    console.log('[Supabase] layout_rule 저장 시작', rows);
+    const { error: deleteError } = await supabaseClient
+      .from('layout_rule')
+      .delete()
+      .neq('id', 0);
+
+    if(deleteError) throw deleteError;
+
+    if(rows.length){
+      const { error: insertError } = await supabaseClient
+        .from('layout_rule')
+        .insert(rows);
+
+      if(insertError) throw insertError;
+    }
+
+    console.log('[Supabase] layout_rule 저장 완료');
+    toast(`LAYOUT_RULE 업데이트 완료 · ${nowText()}`);
+  }catch(error){
+    console.error('[Supabase] layout_rule 저장 실패', error);
+    toast(`LAYOUT_RULE 업데이트 실패 · ${nowText()}`);
+  }
+}
+
+async function loadSavedLayoutRules(){
+  try{
+    console.log('[Supabase] layout_rule 불러오기 시작');
+    const { data, error } = await supabaseClient
+      .from('layout_rule')
+      .select('total_qty, row_rule, memo')
+      .order('id', { ascending: true });
+
+    if(error) throw error;
+
+    console.log('[Supabase] layout_rule 불러오기 완료', data);
+    return Array.isArray(data) ? data : [];
+  }catch(error){
+    console.error('[Supabase] layout_rule 불러오기 실패', error);
+    toast('LAYOUT_RULE 불러오기 실패');
+    return null;
+  }
+}
+
+function updateActiveData(){
+  const t=activeTable();
+  if(t.id === 'dbTable') return saveImageDb();
+  if(t.id === 'rulesTable') return saveLayoutRules();
+}
 function syncToolbarByTab(){
-  const isDb = !$('#dbPanel').classList.contains('hidden');
-  $('#dbUpdateBtn').classList.toggle('hidden', !isDb);
+  const t=activeTable();
+  const isOptions = t.id === 'optionsTable';
+  const isDb = t.id === 'dbTable';
+  const isRules = t.id === 'rulesTable';
+  $('#sampleBtn').classList.toggle('hidden', !isOptions);
+  $('#dbUpdateBtn').classList.toggle('hidden', !(isDb || isRules));
 }
 async function initApp(){
   setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'옵션구성', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
 
   const savedDb = await loadSavedImageDb();
-
   setTableData('dbTable', DB_HEADERS, savedDb && savedDb.length ? savedDb : [
     {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:''},
     {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:''}
   ]);
 
-  setTableData('rulesTable', RULE_HEADERS, defaultRules());
+  const savedRules = await loadSavedLayoutRules();
+  setTableData('rulesTable', RULE_HEADERS, savedRules && savedRules.length ? savedRules : defaultRules());
   syncToolbarByTab();
 }
 
@@ -639,7 +707,7 @@ $$('.head-check').forEach(ch=>ch.addEventListener('change',()=>{
 }));
 $('#clearBtn').onclick=()=>{ const t=activeTable(); const headers=t.headers; const rows=readTable(t.id, headers); setTableData(t.id, headers, rows); resetHeaderCheck(t.id); };
 $('#sampleBtn').onclick=fillSample;
-$('#dbUpdateBtn').onclick=saveImageDb;
+$('#dbUpdateBtn').onclick=updateActiveData;
 $('#generateBtn').onclick=generate;
 $('#downloadAllBtn').onclick=downloadAll;
 
