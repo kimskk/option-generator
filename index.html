@@ -242,7 +242,20 @@
     #dbTable{min-width:1160px}
     #rulesTable{min-width:920px}
 
-    .sheet th.select-col,.sheet td.select-col{width:48px;padding:0}
+    .sheet th.select-col,.sheet td.select-col{
+      width:48px;
+      padding:0;
+      position:sticky;
+      left:0;
+      z-index:3;
+      background:#fff;
+      box-shadow:1px 0 0 rgba(238,232,223,.9);
+    }
+    .sheet th.select-col{
+      z-index:5;
+      background:#f7f8fa;
+    }
+    .sheet tbody tr:hover td.select-col{background:#f7f8fa}
     .row-check,.head-check{
       width:16px;
       height:16px;
@@ -706,8 +719,8 @@ function clearAllActive(){
 function fillSample(){
   setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'옵션구성', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
   setTableData('dbTable', DB_HEADERS, [
-    {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:''},
-    {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:''}
+    {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:'./assets/products/TS_06.png'},
+    {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:'./assets/products/TS_05.png'}
   ]);
   setTableData('rulesTable', RULE_HEADERS, defaultRules());
 }
@@ -839,8 +852,8 @@ async function initApp(){
 
   const savedDb = await loadSavedImageDb();
   setTableData('dbTable', DB_HEADERS, savedDb && savedDb.length ? savedDb : [
-    {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:''},
-    {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:''}
+    {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:'./assets/products/TS_06.png'},
+    {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:'./assets/products/TS_05.png'}
   ]);
 
   const savedRules = await loadSavedLayoutRules();
@@ -894,11 +907,37 @@ function getRuleForTotal(total){
 }
 
 function hex(hex, fallback){ if(!hex) return fallback; const v=String(hex).trim(); return /^#[0-9a-f]{6}$/i.test(v) ? v : fallback; }
+function normalizeImageSrc(src){
+  const raw = String(src || '').trim();
+  if(!raw) return '';
+  if(/^https?:\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('blob:')) return raw;
+  if(raw.startsWith('/')) return raw;
+  if(raw.startsWith('./') || raw.startsWith('../')) return raw;
+  return `./${raw}`;
+}
+function isExternalImageSrc(src){
+  try{
+    const url = new URL(src, window.location.href);
+    return url.origin !== window.location.origin && /^https?:$/i.test(url.protocol);
+  }catch(e){
+    return false;
+  }
+}
 function loadImage(src){
   return new Promise((resolve,reject)=>{
-    if(!src) return reject(new Error('no src'));
-    if(imageCache.has(src)) return resolve(imageCache.get(src));
-    const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ imageCache.set(src,img); resolve(img); }; img.onerror=reject; img.src=src;
+    const normalizedSrc = normalizeImageSrc(src);
+    if(!normalizedSrc) return reject(new Error('no src'));
+    if(imageCache.has(normalizedSrc)) return resolve(imageCache.get(normalizedSrc));
+
+    const img = new Image();
+    if(isExternalImageSrc(normalizedSrc)) img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      imageCache.set(normalizedSrc, img);
+      resolve(img);
+    };
+    img.onerror = () => reject(new Error(`image load failed: ${normalizedSrc}`));
+    img.src = normalizedSrc;
   });
 }
 
