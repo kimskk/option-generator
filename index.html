@@ -190,7 +190,6 @@
     #deleteRowBtn{min-width:120px}
     #clearAllBtn{min-width:96px}
     #clearBtn{min-width:98px}
-    #sampleBtn{min-width:98px}
     #dbUpdateBtn{min-width:98px}
     .mini.update-action{
       background:var(--point);
@@ -589,26 +588,6 @@
     #optionsTable td:nth-child(11){
       padding-right:104px;
     }
-    .convert-composition-btn{
-      position:absolute;
-      right:16px;
-      bottom:15px;
-      height:34px;
-      min-width:68px;
-      border:1px solid rgba(255,105,46,.45);
-      border-radius:999px;
-      background:#fff6f1;
-      color:var(--point);
-      font-size:13px;
-      font-weight:900;
-      cursor:pointer;
-      z-index:2;
-      box-shadow:none;
-    }
-    .convert-composition-btn:hover{
-      background:var(--point);
-      color:#fff;
-    }
     #optionsTable tbody tr:hover td{background:#fff}
     #optionsTable tbody tr:hover td.select-col{background:#fafbfc}
     #optionsTable td[contenteditable="true"]:focus{
@@ -704,9 +683,8 @@
     <button class="mini" id="deleteRowBtn">선택 행 삭제</button>
     <button class="mini" id="clearAllBtn">전체 삭제</button>
     <button class="mini" id="clearBtn">빈 행 정리</button>
-    <button class="mini" id="sampleBtn">샘플 채우기</button>
     <button class="mini update-action hidden" id="dbUpdateBtn">업데이트</button>
-    <span class="hint" id="tabHint">구성안내 작성 가이드 ex. 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3)</span>
+    <span class="hint" id="tabHint">구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 띄어쓰기 자동 제거 / 입력 즉시 누끼배치 자동 변환</span>
     <span class="toolbar-spacer"></span>
     <button class="mini sort-action" id="sortModeBtn">행 정렬</button>
     <button class="mini add-action" id="addOneRowBtn">+ 1행 추가</button>
@@ -1048,6 +1026,10 @@ function createEmptyRow(tableId, cols, autoCode=false){
     td.contentEditable='true';
     td.addEventListener('keydown', handleCellKeydown);
     td.addEventListener('blur', () => formatPriceCell(td));
+    if(tableId === 'optionsTable' && headers[c] === 'composition_display'){
+      td.addEventListener('input', () => autoConvertCompositionForRow(tr));
+      td.addEventListener('blur', () => autoConvertCompositionForRow(tr));
+    }
     td.addEventListener('mousedown', e => {
       if(e.target === td && !String(td.innerText || '').trim()){
         requestAnimationFrame(() => placeCaretEnd(td));
@@ -1056,19 +1038,6 @@ function createEmptyRow(tableId, cols, autoCode=false){
     tr.appendChild(td);
   }
 
-  if(tableId === 'optionsTable'){
-    const convertBtn = document.createElement('button');
-    convertBtn.type = 'button';
-    convertBtn.className = 'convert-composition-btn';
-    convertBtn.textContent = '변환';
-    convertBtn.title = '구성안내를 누끼배치 형식으로 변환';
-    convertBtn.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      convertCompositionForRow(tr);
-    });
-    tr.appendChild(convertBtn);
-  }
 
   if(tableId==='optionsTable' && autoCode){
     tr.children[1].innerText=getNextOptionCode(); // option_code
@@ -1192,15 +1161,6 @@ function clearAllActive(){
   toast('전체 삭제 완료');
 }
 
-function fillSample(){
-  setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'옵션구성', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
-  setTableData('dbTable', DB_HEADERS, [
-    {product_key:'통살:떡볶이', product_group:'통살', flavor:'떡볶이', image_url:'./assets/products/TS_06.png'},
-    {product_key:'통살:데리야끼', product_group:'통살', flavor:'데리야끼', image_url:'./assets/products/TS_05.png'}
-  ]);
-  setTableData('rulesTable', RULE_HEADERS, defaultRules());
-}
-
 async function saveImageDb(){
   const rows = readTable('dbTable', DB_HEADERS)
     .filter(row => row.product_key || row.product_group || row.flavor || row.image_url)
@@ -1320,7 +1280,6 @@ function syncToolbarByTab(){
   const isOptions = t.id === 'optionsTable';
   const isDb = t.id === 'dbTable';
   const isRules = t.id === 'rulesTable';
-  $('#sampleBtn').classList.toggle('hidden', !isOptions);
   $('#dbUpdateBtn').classList.toggle('hidden', !(isDb || isRules));
   $('#sortModeBtn').classList.toggle('hidden', !isOptions);
   $('#addOneRowBtn').textContent = isOptions ? '+ 1행 추가' : '1행 추가';
@@ -1328,7 +1287,7 @@ function syncToolbarByTab(){
   if(!isOptions && optionSortMode) setOptionSortMode(false);
   const hint = $('#tabHint');
   if(hint){
-    if(isOptions) hint.textContent = '구성안내 작성 가이드 ex. 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3)';
+    if(isOptions) hint.textContent = '구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 띄어쓰기 자동 제거 / 입력 즉시 누끼배치 자동 변환';
     if(isDb) hint.textContent = '이미지 DB 입력: 상품키는 누끼배치 값과 동일하게 입력, 이미지 경로는 ./assets/products/파일명.png 형식';
     if(isRules) hint.textContent = '이미지 Layout 입력: 총수량에 맞춰 줄 배치를 입력. 예: 10개 = 5,5 / 7개 = 4,3';
   }
@@ -1434,21 +1393,21 @@ function convertCompositionGuideToParse(displayText, dbRows){
 
   return output.join(',');
 }
-function convertCompositionForRow(tr){
+function autoConvertCompositionForRow(tr){
   const cells = tr?.children ? [...tr.children] : [];
   const displayCell = cells[9];  // 구성안내
   const parseCell = cells[10];   // 누끼배치
   if(!displayCell || !parseCell) return;
 
-  const dbRows = readTable('dbTable', DB_HEADERS);
-  const converted = convertCompositionGuideToParse(displayCell.innerText, dbRows);
-  if(!converted){
-    toast('변환할 구성안내 형식을 확인해줘');
+  const displayText = String(displayCell.innerText || '').trim();
+  if(!displayText){
+    parseCell.innerText = '';
     return;
   }
 
-  parseCell.innerText = converted;
-  toast('누끼배치 변환 완료');
+  const dbRows = readTable('dbTable', DB_HEADERS);
+  const converted = convertCompositionGuideToParse(displayText, dbRows);
+  if(converted) parseCell.innerText = converted;
 }
 
 function parseComposition(str){
@@ -1730,7 +1689,6 @@ $$('.head-check').forEach(ch=>ch.addEventListener('change',()=>{
   syncHeaderCheckState(tableId);
 }));
 $('#clearBtn').onclick=()=>{ const t=activeTable(); const headers=t.headers; const rows=readTable(t.id, headers); setTableData(t.id, headers, rows); resetHeaderCheck(t.id); };
-$('#sampleBtn').onclick=fillSample;
 $('#dbUpdateBtn').onclick=updateActiveData;
 $('#generateBtn').onclick=generate;
 $('#downloadAllBtn').onclick=downloadAll;
