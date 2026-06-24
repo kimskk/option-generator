@@ -499,6 +499,7 @@
       gap:10px;
     }
     #optionsTable tbody tr{
+      position:relative;
       display:grid!important;
       grid-template-columns:88px 210px 1.15fr 1.35fr .9fr 1fr 1fr 1fr;
       grid-template-areas:
@@ -585,6 +586,29 @@
     #optionsTable td:nth-child(9){border-right:0}
     #optionsTable td:nth-child(10),#optionsTable td:nth-child(11){border-bottom:0;min-height:64px}
     #optionsTable td:nth-child(11){border-right:0}
+    #optionsTable td:nth-child(11){
+      padding-right:104px;
+    }
+    .convert-composition-btn{
+      position:absolute;
+      right:16px;
+      bottom:15px;
+      height:34px;
+      min-width:68px;
+      border:1px solid rgba(255,105,46,.45);
+      border-radius:999px;
+      background:#fff6f1;
+      color:var(--point);
+      font-size:13px;
+      font-weight:900;
+      cursor:pointer;
+      z-index:2;
+      box-shadow:none;
+    }
+    .convert-composition-btn:hover{
+      background:var(--point);
+      color:#fff;
+    }
     #optionsTable tbody tr:hover td{background:#fff}
     #optionsTable tbody tr:hover td.select-col{background:#fafbfc}
     #optionsTable td[contenteditable="true"]:focus{
@@ -1032,6 +1056,20 @@ function createEmptyRow(tableId, cols, autoCode=false){
     tr.appendChild(td);
   }
 
+  if(tableId === 'optionsTable'){
+    const convertBtn = document.createElement('button');
+    convertBtn.type = 'button';
+    convertBtn.className = 'convert-composition-btn';
+    convertBtn.textContent = '변환';
+    convertBtn.title = '구성안내를 누끼배치 형식으로 변환';
+    convertBtn.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      convertCompositionForRow(tr);
+    });
+    tr.appendChild(convertBtn);
+  }
+
   if(tableId==='optionsTable' && autoCode){
     tr.children[1].innerText=getNextOptionCode(); // option_code
     tr.children[5].innerText='정상가';          // original_price_label
@@ -1307,6 +1345,110 @@ async function initApp(){
   const savedRules = await loadSavedLayoutRules();
   setTableData('rulesTable', RULE_HEADERS, savedRules && savedRules.length ? savedRules : defaultRules());
   syncToolbarByTab();
+}
+
+
+function normalizeMatchText(value){
+  return String(value || '').replace(/\s+/g, '').trim().toLowerCase();
+}
+function compactProductKey(value){
+  // 제품군/맛/상품키에 들어간 모든 띄어쓰기는 DB 매칭 및 출력에서 무시
+  return String(value || '').replace(/\s+/g, '').trim();
+}
+function buildProductLookup(dbRows){
+  const lookup = new Map();
+  dbRows.forEach(row => {
+    const group = normalizeMatchText(row.product_group);
+    const flavor = normalizeMatchText(row.flavor);
+    if(group && flavor && row.product_key){
+      lookup.set(`${group}::${flavor}`, compactProductKey(row.product_key));
+    }
+  });
+  return lookup;
+}
+function findProductKeyFromGuide(group, flavor, productLookup){
+  const groupKey = normalizeMatchText(group);
+  const flavorKey = normalizeMatchText(flavor);
+  if(!flavorKey) return '';
+
+  const exact = productLookup.get(`${groupKey}::${flavorKey}`);
+  if(exact) return exact;
+
+  // DB의 제품군명이 구성안내의 제품군명과 완전히 같지 않아도 어느 정도 매칭되게 보정
+  for(const [key, productKey] of productLookup.entries()){
+    const [dbGroup, dbFlavor] = key.split('::');
+    const groupMatched = dbGroup === groupKey || dbGroup.includes(groupKey) || groupKey.includes(dbGroup);
+    if(groupMatched && dbFlavor === flavorKey) return productKey;
+  }
+
+  const cleanGroup = compactProductKey(group);
+  const cleanFlavor = compactProductKey(flavor);
+  return cleanGroup ? `${cleanGroup}:${cleanFlavor}` : cleanFlavor;
+}
+function splitGuideGroups(displayText){
+  const text = String(displayText || '').replace(/\r/g, '\n').replace(/\n+/g, ' + ');
+  const groups = [];
+  let buf = '';
+  let depth = 0;
+
+  for(const ch of text){
+    if(ch === '('){ depth++; buf += ch; continue; }
+    if(ch === ')'){ depth = Math.max(0, depth - 1); buf += ch; continue; }
+    if(ch === '+' && depth === 0){
+      const value = buf.trim();
+      if(value) groups.push(value);
+      buf = '';
+      continue;
+    }
+    buf += ch;
+  }
+
+  const last = buf.trim();
+  if(last) groups.push(last);
+  return groups;
+}
+function convertCompositionGuideToParse(displayText, dbRows){
+  const lookup = buildProductLookup(dbRows || []);
+  const output = [];
+
+  splitGuideGroups(displayText).forEach(groupBlock => {
+    const match = groupBlock.match(/^(.+?)\s*\((.+)\)\s*$/);
+    if(!match) return;
+
+    const group = match[1].trim();
+    const flavorsText = match[2].trim();
+
+    flavorsText.split(/\s*,\s*/).forEach(item => {
+      const raw = item.trim();
+      if(!raw) return;
+
+      const qtyMatch = raw.match(/^(.*?)(?:\s*[xX×]\s*|\s*)(\d+)\s*$/);
+      const flavor = qtyMatch ? qtyMatch[1].trim() : raw;
+      const qty = qtyMatch ? Number(qtyMatch[2]) : 1;
+      if(!flavor) return;
+
+      const productKey = findProductKeyFromGuide(group, flavor, lookup);
+      output.push(`${productKey}x${qty || 1}`);
+    });
+  });
+
+  return output.join(',');
+}
+function convertCompositionForRow(tr){
+  const cells = tr?.children ? [...tr.children] : [];
+  const displayCell = cells[9];  // 구성안내
+  const parseCell = cells[10];   // 누끼배치
+  if(!displayCell || !parseCell) return;
+
+  const dbRows = readTable('dbTable', DB_HEADERS);
+  const converted = convertCompositionGuideToParse(displayCell.innerText, dbRows);
+  if(!converted){
+    toast('변환할 구성안내 형식을 확인해줘');
+    return;
+  }
+
+  parseCell.innerText = converted;
+  toast('누끼배치 변환 완료');
 }
 
 function parseComposition(str){
