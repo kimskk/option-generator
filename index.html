@@ -664,6 +664,41 @@
       font-weight:950;
     }
 
+
+    /* 구성안내 실시간 검증 */
+    @keyframes compositionShake{
+      0%,100%{transform:translateX(0)}
+      18%{transform:translateX(-7px)}
+      36%{transform:translateX(7px)}
+      54%{transform:translateX(-5px)}
+      72%{transform:translateX(5px)}
+    }
+    #optionsTable td.composition-error{
+      box-shadow:inset 0 0 0 2px #ff4d4f!important;
+      background:#fffafa!important;
+      padding-bottom:34px!important;
+    }
+    #optionsTable td.composition-error::after{
+      content:attr(data-error);
+      display:block!important;
+      position:absolute;
+      left:104px;
+      right:16px;
+      bottom:8px;
+      font-size:12px;
+      line-height:1.28;
+      font-weight:900;
+      color:#ff3b30;
+      white-space:pre-line;
+      pointer-events:none;
+    }
+    #optionsTable td.composition-shake{
+      animation:compositionShake .36s ease both;
+    }
+    #optionsTable td.composition-ok{
+      box-shadow:inset 0 0 0 2px rgba(39,174,96,.28)!important;
+    }
+
 </style>
 </head>
 <body>
@@ -684,7 +719,7 @@
     <button class="mini" id="clearAllBtn">전체 삭제</button>
     <button class="mini" id="clearBtn">빈 행 정리</button>
     <button class="mini update-action hidden" id="dbUpdateBtn">업데이트</button>
-    <span class="hint" id="tabHint">구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 띄어쓰기 자동 제거 / 입력 즉시 누끼배치 자동 변환</span>
+    <span class="hint" id="tabHint">구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 제품군·맛은 이미지 DB 기준, 띄어쓰기는 자동 제거 / 수량은 반드시 입력</span>
     <span class="toolbar-spacer"></span>
     <button class="mini sort-action" id="sortModeBtn">행 정렬</button>
     <button class="mini add-action" id="addOneRowBtn">+ 1행 추가</button>
@@ -941,8 +976,13 @@ function moveToNextEditableCell(td){
 function handleCellKeydown(e){
   if(e.key !== 'Enter') return;
   e.preventDefault();
-  formatPriceCell(e.currentTarget);
-  moveToNextEditableCell(e.currentTarget);
+  const cell = e.currentTarget;
+  formatPriceCell(cell);
+  if(cell?.dataset?.key === 'composition_display'){
+    const ok = autoConvertCompositionForRow(cell.closest('tr'), true, {showErrors:true, showOk:true});
+    if(!ok) return; // 오류가 있으면 현재 칸에 머물러서 바로 수정 가능하게 유지
+  }
+  moveToNextEditableCell(cell);
 }
 
 function getNextOptionCode(){
@@ -1027,8 +1067,10 @@ function createEmptyRow(tableId, cols, autoCode=false){
     td.addEventListener('keydown', handleCellKeydown);
     td.addEventListener('blur', () => formatPriceCell(td));
     if(tableId === 'optionsTable' && headers[c] === 'composition_display'){
-      td.addEventListener('input', () => autoConvertCompositionForRow(tr));
-      td.addEventListener('blur', () => autoConvertCompositionForRow(tr));
+      // 작성 중에는 경고를 띄우지 않고, 형식이 완성되었을 때만 조용히 누끼배치를 갱신
+      td.addEventListener('input', () => autoConvertCompositionForRow(tr, false, {showErrors:false, showOk:false}));
+      // 입력칸을 벗어났을 때만 에러/성공 상태 표시
+      td.addEventListener('blur', () => autoConvertCompositionForRow(tr, true, {showErrors:true, showOk:true}));
     }
     td.addEventListener('mousedown', e => {
       if(e.target === td && !String(td.innerText || '').trim()){
@@ -1287,13 +1329,13 @@ function syncToolbarByTab(){
   if(!isOptions && optionSortMode) setOptionSortMode(false);
   const hint = $('#tabHint');
   if(hint){
-    if(isOptions) hint.textContent = '구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 띄어쓰기 자동 제거 / 입력 즉시 누끼배치 자동 변환';
+    if(isOptions) hint.textContent = '구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 제품군·맛은 이미지 DB 기준, 띄어쓰기는 자동 제거 / 수량은 반드시 입력';
     if(isDb) hint.textContent = '이미지 DB 입력: 상품키는 누끼배치 값과 동일하게 입력, 이미지 경로는 ./assets/products/파일명.png 형식';
     if(isRules) hint.textContent = '이미지 Layout 입력: 총수량에 맞춰 줄 배치를 입력. 예: 10개 = 5,5 / 7개 = 4,3';
   }
 }
 async function initApp(){
-  setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'옵션구성', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
+  setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'통살(떡볶이5, 데리야끼5)', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
 
   const savedDb = await loadSavedImageDb();
   setTableData('dbTable', DB_HEADERS, savedDb && savedDb.length ? savedDb : [
@@ -1316,28 +1358,50 @@ function compactProductKey(value){
 }
 function buildProductLookup(dbRows){
   const lookup = new Map();
-  dbRows.forEach(row => {
+  const groups = new Map();
+  const flavorsByGroup = new Map();
+
+  (dbRows || []).forEach(row => {
     const group = normalizeMatchText(row.product_group);
     const flavor = normalizeMatchText(row.flavor);
+    const groupRaw = compactProductKey(row.product_group);
+    const flavorRaw = compactProductKey(row.flavor);
+
+    if(group && groupRaw && !groups.has(group)) groups.set(group, groupRaw);
+    if(group && flavor && flavorRaw){
+      if(!flavorsByGroup.has(group)) flavorsByGroup.set(group, new Map());
+      flavorsByGroup.get(group).set(flavor, flavorRaw);
+    }
     if(group && flavor && row.product_key){
       lookup.set(`${group}::${flavor}`, compactProductKey(row.product_key));
     }
   });
-  return lookup;
+  return { lookup, groups, flavorsByGroup };
 }
-function findProductKeyFromGuide(group, flavor, productLookup){
+function findMatchedDbGroup(group, productMeta){
+  const groupKey = normalizeMatchText(group);
+  if(!groupKey) return '';
+  if(productMeta.groups.has(groupKey)) return groupKey;
+
+  // DB의 제품군명이 구성안내의 제품군명과 완전히 같지 않아도 어느 정도 매칭되게 보정
+  for(const dbGroup of productMeta.groups.keys()){
+    const groupMatched = dbGroup === groupKey || dbGroup.includes(groupKey) || groupKey.includes(dbGroup);
+    if(groupMatched) return dbGroup;
+  }
+  return '';
+}
+function findProductKeyFromGuide(group, flavor, productMeta){
   const groupKey = normalizeMatchText(group);
   const flavorKey = normalizeMatchText(flavor);
   if(!flavorKey) return '';
 
-  const exact = productLookup.get(`${groupKey}::${flavorKey}`);
+  const exact = productMeta.lookup.get(`${groupKey}::${flavorKey}`);
   if(exact) return exact;
 
-  // DB의 제품군명이 구성안내의 제품군명과 완전히 같지 않아도 어느 정도 매칭되게 보정
-  for(const [key, productKey] of productLookup.entries()){
-    const [dbGroup, dbFlavor] = key.split('::');
-    const groupMatched = dbGroup === groupKey || dbGroup.includes(groupKey) || groupKey.includes(dbGroup);
-    if(groupMatched && dbFlavor === flavorKey) return productKey;
+  const matchedGroup = findMatchedDbGroup(group, productMeta);
+  if(matchedGroup){
+    const matched = productMeta.lookup.get(`${matchedGroup}::${flavorKey}`);
+    if(matched) return matched;
   }
 
   const cleanGroup = compactProductKey(group);
@@ -1366,48 +1430,141 @@ function splitGuideGroups(displayText){
   if(last) groups.push(last);
   return groups;
 }
-function convertCompositionGuideToParse(displayText, dbRows){
-  const lookup = buildProductLookup(dbRows || []);
+function validateAndConvertCompositionGuide(displayText, dbRows){
+  const text = String(displayText || '').trim();
+  const errors = [];
   const output = [];
+  const productMeta = buildProductLookup(dbRows || []);
 
-  splitGuideGroups(displayText).forEach(groupBlock => {
-    const match = groupBlock.match(/^(.+?)\s*\((.+)\)\s*$/);
-    if(!match) return;
+  if(!text) return { ok:true, value:'', errors:[] };
+
+  const openCount = (text.match(/\(/g) || []).length;
+  const closeCount = (text.match(/\)/g) || []).length;
+  if(openCount > closeCount) errors.push('괄호가 닫히지 않았습니다. 예: 통살(핫양념치킨3, 허니소이3)');
+  if(closeCount > openCount) errors.push('여는 괄호가 없습니다. 예: 통살(핫양념치킨3, 허니소이3)');
+
+  const groupBlocks = splitGuideGroups(text);
+  if(!groupBlocks.length) errors.push('구성안내 형식이 비어있습니다.');
+
+  groupBlocks.forEach(groupBlock => {
+    const match = groupBlock.match(/^([^()]+?)\s*\(([^()]*)\)\s*$/);
+    if(!match){
+      if(groupBlock.trim()) errors.push(`형식이 올바르지 않습니다: ${groupBlock.trim()}`);
+      return;
+    }
 
     const group = match[1].trim();
     const flavorsText = match[2].trim();
+    const groupName = compactProductKey(group);
+
+    if(!groupName){
+      errors.push('제품군이 누락되었습니다. 예: 통살(핫양념치킨3)');
+      return;
+    }
+
+    const matchedGroup = findMatchedDbGroup(group, productMeta);
+    if(!matchedGroup){
+      errors.push(`제품군 '${groupName}'을 이미지 DB에서 찾을 수 없습니다.`);
+    }
+
+    if(!flavorsText){
+      errors.push(`제품군 '${groupName}' 안에 맛이 없습니다.`);
+      return;
+    }
 
     flavorsText.split(/\s*,\s*/).forEach(item => {
       const raw = item.trim();
       if(!raw) return;
 
       const qtyMatch = raw.match(/^(.*?)(?:\s*[xX×]\s*|\s*)(\d+)\s*$/);
-      const flavor = qtyMatch ? qtyMatch[1].trim() : raw;
-      const qty = qtyMatch ? Number(qtyMatch[2]) : 1;
-      if(!flavor) return;
+      if(!qtyMatch){
+        errors.push(`'${compactProductKey(raw)}' 수량이 누락되었습니다. 예: ${compactProductKey(raw)}3`);
+        return;
+      }
 
-      const productKey = findProductKeyFromGuide(group, flavor, lookup);
-      output.push(`${productKey}x${qty || 1}`);
+      const flavor = qtyMatch[1].trim();
+      const qty = Number(qtyMatch[2]);
+      const flavorName = compactProductKey(flavor);
+
+      if(!flavorName){
+        errors.push(`제품군 '${groupName}' 안에 맛 이름이 누락되었습니다.`);
+        return;
+      }
+      if(!qty || qty < 1){
+        errors.push(`'${flavorName}' 수량이 올바르지 않습니다.`);
+        return;
+      }
+
+      if(matchedGroup){
+        const flavorMap = productMeta.flavorsByGroup.get(matchedGroup) || new Map();
+        const flavorKey = normalizeMatchText(flavor);
+        if(!flavorMap.has(flavorKey)){
+          errors.push(`맛 '${flavorName}'을 제품군 '${groupName}'에서 찾을 수 없습니다.`);
+        }
+      }
+
+      const productKey = findProductKeyFromGuide(group, flavor, productMeta);
+      output.push(`${productKey}x${qty}`);
     });
   });
 
-  return output.join(',');
+  const uniqueErrors = [...new Set(errors)];
+  return { ok: uniqueErrors.length === 0, value: output.join(','), errors: uniqueErrors };
 }
-function autoConvertCompositionForRow(tr){
+function convertCompositionGuideToParse(displayText, dbRows){
+  return validateAndConvertCompositionGuide(displayText, dbRows).value;
+}
+function setCompositionGuideStatus(displayCell, messages, type=''){
+  if(!displayCell) return;
+  displayCell.classList.remove('composition-error','composition-ok');
+  delete displayCell.dataset.error;
+  if(type === 'error'){
+    displayCell.classList.add('composition-error');
+    displayCell.dataset.error = messages.join('\n');
+  }else if(type === 'ok'){
+    displayCell.classList.add('composition-ok');
+    setTimeout(() => displayCell.classList.remove('composition-ok'), 420);
+  }
+}
+function shakeCompositionCell(displayCell){
+  if(!displayCell) return;
+  displayCell.classList.remove('composition-shake');
+  void displayCell.offsetWidth;
+  displayCell.classList.add('composition-shake');
+  setTimeout(() => displayCell.classList.remove('composition-shake'), 420);
+}
+function autoConvertCompositionForRow(tr, shouldShake=false, options={}){
+  const {showErrors=true, showOk=true} = options;
   const cells = tr?.children ? [...tr.children] : [];
   const displayCell = cells[9];  // 구성안내
   const parseCell = cells[10];   // 누끼배치
-  if(!displayCell || !parseCell) return;
+  if(!displayCell || !parseCell) return false;
 
   const displayText = String(displayCell.innerText || '').trim();
   if(!displayText){
     parseCell.innerText = '';
-    return;
+    setCompositionGuideStatus(displayCell, [], '');
+    return true;
   }
 
   const dbRows = readTable('dbTable', DB_HEADERS);
-  const converted = convertCompositionGuideToParse(displayText, dbRows);
-  if(converted) parseCell.innerText = converted;
+  const result = validateAndConvertCompositionGuide(displayText, dbRows);
+  if(result.ok){
+    parseCell.innerText = result.value;
+    setCompositionGuideStatus(displayCell, showOk ? ['변환 완료'] : [], showOk ? 'ok' : '');
+    return true;
+  }
+
+  // 작성 중에는 경고를 숨기고 기존 누끼배치 값을 유지
+  if(!showErrors){
+    setCompositionGuideStatus(displayCell, [], '');
+    return false;
+  }
+
+  // 에러 발생 시 기존 누끼배치 값은 유지하고, 구성안내 칸에만 경고 표시
+  setCompositionGuideStatus(displayCell, result.errors.map(msg => `❌ ${msg}`), 'error');
+  if(shouldShake) shakeCompositionCell(displayCell);
+  return false;
 }
 
 function parseComposition(str){
