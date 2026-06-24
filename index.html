@@ -719,7 +719,7 @@
     <button class="mini" id="clearAllBtn">전체 삭제</button>
     <button class="mini" id="clearBtn">빈 행 정리</button>
     <button class="mini update-action hidden" id="dbUpdateBtn">업데이트</button>
-    <span class="hint" id="tabHint">구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 제품군·맛은 이미지 DB 기준, 띄어쓰기는 자동 제거 / 수량은 반드시 입력</span>
+    <span class="hint" id="tabHint">구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 제품군·맛은 이미지 DB 기준, 띄어쓰기 자동 제거 / 맛 글자는 있어도 없어도 매칭 / 수량은 반드시 입력</span>
     <span class="toolbar-spacer"></span>
     <button class="mini sort-action" id="sortModeBtn">행 정렬</button>
     <button class="mini add-action" id="addOneRowBtn">+ 1행 추가</button>
@@ -1329,7 +1329,7 @@ function syncToolbarByTab(){
   if(!isOptions && optionSortMode) setOptionSortMode(false);
   const hint = $('#tabHint');
   if(hint){
-    if(isOptions) hint.textContent = '구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 제품군·맛은 이미지 DB 기준, 띄어쓰기는 자동 제거 / 수량은 반드시 입력';
+    if(isOptions) hint.textContent = '구성안내 작성 가이드: 제품군(맛수량, 맛수량) + 제품군(맛수량) / 예시: 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3) / 제품군·맛은 이미지 DB 기준, 띄어쓰기 자동 제거 / 맛 글자는 있어도 없어도 매칭 / 수량은 반드시 입력';
     if(isDb) hint.textContent = '이미지 DB 입력: 상품키는 누끼배치 값과 동일하게 입력, 이미지 경로는 ./assets/products/파일명.png 형식';
     if(isRules) hint.textContent = '이미지 Layout 입력: 총수량에 맞춰 줄 배치를 입력. 예: 10개 = 5,5 / 7개 = 4,3';
   }
@@ -1352,6 +1352,11 @@ async function initApp(){
 function normalizeMatchText(value){
   return String(value || '').replace(/\s+/g, '').trim().toLowerCase();
 }
+function normalizeFlavorText(value){
+  // 맛 이름은 담당자별로 '맛'을 넣거나 빼도 같은 값으로 인식
+  // 예: 허니소이맛 / 허니소이 / 허니 소이 맛 → 허니소이
+  return String(value || '').replace(/맛/g, '').replace(/\s+/g, '').trim().toLowerCase();
+}
 function compactProductKey(value){
   // 제품군/맛/상품키에 들어간 모든 띄어쓰기는 DB 매칭 및 출력에서 무시
   return String(value || '').replace(/\s+/g, '').trim();
@@ -1363,7 +1368,7 @@ function buildProductLookup(dbRows){
 
   (dbRows || []).forEach(row => {
     const group = normalizeMatchText(row.product_group);
-    const flavor = normalizeMatchText(row.flavor);
+    const flavor = normalizeFlavorText(row.flavor);
     const groupRaw = compactProductKey(row.product_group);
     const flavorRaw = compactProductKey(row.flavor);
 
@@ -1392,7 +1397,7 @@ function findMatchedDbGroup(group, productMeta){
 }
 function findProductKeyFromGuide(group, flavor, productMeta){
   const groupKey = normalizeMatchText(group);
-  const flavorKey = normalizeMatchText(flavor);
+  const flavorKey = normalizeFlavorText(flavor);
   if(!flavorKey) return '';
 
   const exact = productMeta.lookup.get(`${groupKey}::${flavorKey}`);
@@ -1497,7 +1502,7 @@ function validateAndConvertCompositionGuide(displayText, dbRows){
 
       if(matchedGroup){
         const flavorMap = productMeta.flavorsByGroup.get(matchedGroup) || new Map();
-        const flavorKey = normalizeMatchText(flavor);
+        const flavorKey = normalizeFlavorText(flavor);
         if(!flavorMap.has(flavorKey)){
           errors.push(`맛 '${flavorName}'을 제품군 '${groupName}'에서 찾을 수 없습니다.`);
         }
