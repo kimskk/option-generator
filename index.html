@@ -706,7 +706,7 @@
     <button class="mini" id="clearBtn">빈 행 정리</button>
     <button class="mini" id="sampleBtn">샘플 채우기</button>
     <button class="mini update-action hidden" id="dbUpdateBtn">업데이트</button>
-    <span class="hint" id="tabHint">셀 클릭해서 직접 입력. composition_parse 예: 통살:떡볶이x5,통살:데리야끼x5</span>
+    <span class="hint" id="tabHint">구성안내 작성 가이드 ex. 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3)</span>
     <span class="toolbar-spacer"></span>
     <button class="mini sort-action" id="sortModeBtn">행 정렬</button>
     <button class="mini add-action" id="addOneRowBtn">+ 1행 추가</button>
@@ -1328,7 +1328,7 @@ function syncToolbarByTab(){
   if(!isOptions && optionSortMode) setOptionSortMode(false);
   const hint = $('#tabHint');
   if(hint){
-    if(isOptions) hint.textContent = '셀 클릭해서 직접 입력. composition_parse 예: 통살:떡볶이x5,통살:데리야끼x5';
+    if(isOptions) hint.textContent = '구성안내 작성 가이드 ex. 통살(핫양념치킨3, 허니소이3) + 제로통살(매콤로제3)';
     if(isDb) hint.textContent = '이미지 DB 입력: 상품키는 누끼배치 값과 동일하게 입력, 이미지 경로는 ./assets/products/파일명.png 형식';
     if(isRules) hint.textContent = '이미지 Layout 입력: 총수량에 맞춰 줄 배치를 입력. 예: 10개 = 5,5 / 7개 = 4,3';
   }
