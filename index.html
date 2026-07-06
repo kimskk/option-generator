@@ -787,6 +787,117 @@
     .preview-meta{font-size:12px;color:#8a8f98;font-weight:900;margin:0 0 10px}
 
 
+
+    /* v8 lock: 옵션입력 행 카드 레이아웃 유지 */
+    #optionsPanel .sheet-scroll{
+      overflow:visible!important;
+      padding:14px!important;
+      background:#fff!important;
+    }
+    #optionsTable{
+      min-width:0!important;
+      width:100%!important;
+      display:block!important;
+      table-layout:auto!important;
+      background:transparent!important;
+    }
+    #optionsTable colgroup,
+    #optionsTable thead{display:none!important;}
+    #optionsTable tbody{
+      display:flex!important;
+      flex-direction:column!important;
+      gap:10px!important;
+    }
+    #optionsTable tbody tr{
+      display:grid!important;
+      grid-template-columns:88px 170px 1fr 1.2fr .75fr .85fr .85fr .85fr 190px!important;
+      grid-template-areas:
+        "check color sub title originLabel originPrice saleLabel salePrice discount"
+        "check compDisplay compDisplay compDisplay compDisplay compDisplay compParse compParse compParse"!important;
+      border:1px solid var(--line)!important;
+      border-radius:10px!important;
+      overflow:hidden!important;
+      background:#fff!important;
+      box-shadow:0 8px 18px rgba(16,17,20,.035)!important;
+    }
+    #optionsTable th,
+    #optionsTable td{
+      min-width:0!important;
+      width:auto!important;
+      height:auto!important;
+      min-height:58px!important;
+      border-right:1px solid rgba(238,232,223,.8)!important;
+      border-bottom:1px solid var(--grid)!important;
+      padding:10px 16px!important;
+      text-align:left!important;
+      white-space:normal!important;
+      word-break:keep-all!important;
+      overflow-wrap:normal!important;
+      background:#fff!important;
+      display:flex!important;
+      flex-direction:row!important;
+      align-items:center!important;
+      justify-content:flex-start!important;
+      gap:12px!important;
+      line-height:1.28!important;
+    }
+    #optionsTable td::before{
+      content:attr(data-label)!important;
+      position:static!important;
+      transform:none!important;
+      display:block!important;
+      flex:0 0 auto!important;
+      width:auto!important;
+      max-width:84px!important;
+      font-size:14px!important;
+      line-height:1!important;
+      font-weight:900!important;
+      color:#111!important;
+      white-space:nowrap!important;
+      overflow:visible!important;
+      text-overflow:clip!important;
+      pointer-events:none!important;
+    }
+    #optionsTable td.select-col{
+      grid-area:check!important;
+      position:static!important;
+      z-index:auto!important;
+      box-shadow:none!important;
+      border-bottom:0!important;
+      align-items:center!important;
+      justify-content:center!important;
+      padding:10px 8px!important;
+      gap:8px!important;
+      background:#fafbfc!important;
+      flex-direction:column!important;
+    }
+    #optionsTable td.select-col::before,
+    #optionsTable td.select-col::after{display:none!important;}
+    #optionsTable td:nth-child(2){display:none!important;}
+    #optionsTable td:nth-child(3){grid-area:color!important; white-space:nowrap!important;}
+    #optionsTable td:nth-child(4){grid-area:sub!important;}
+    #optionsTable td:nth-child(5){grid-area:title!important;}
+    #optionsTable td:nth-child(6){grid-area:originLabel!important;}
+    #optionsTable td:nth-child(7){grid-area:originPrice!important; font-weight:900!important; font-size:17px!important; white-space:nowrap!important;}
+    #optionsTable td:nth-child(8){grid-area:saleLabel!important;}
+    #optionsTable td:nth-child(9){grid-area:salePrice!important; font-weight:900!important; font-size:17px!important; white-space:nowrap!important;}
+    #optionsTable td:nth-child(10){grid-area:discount!important; font-weight:900!important; font-size:17px!important; white-space:nowrap!important; border-right:0!important;}
+    #optionsTable td:nth-child(11){grid-area:compDisplay!important; border-bottom:0!important; min-height:64px!important;}
+    #optionsTable td:nth-child(12){grid-area:compParse!important; border-right:0!important; border-bottom:0!important; min-height:64px!important;}
+    #optionsTable td:nth-child(11),
+    #optionsTable td:nth-child(12){
+      white-space:normal!important;
+      word-break:break-word!important;
+      overflow-wrap:anywhere!important;
+      padding:10px 16px!important;
+      align-items:center!important;
+    }
+    #optionsTable td[contenteditable="true"]:focus{
+      background:#fff!important;
+      box-shadow:inset 0 0 0 2px #cfd3da!important;
+      border-radius:8px!important;
+    }
+
 </style>
 </head>
 <body>
@@ -904,8 +1015,8 @@ const FIGMA_TEMPLATE = {
   priceBox: { x: 50, y: 490, w: 700, h: 196, r: 20 },
   originLabel: { x: 90, y: 544, size: 22, weight: '400', color: '#888888' },
   saleLabel: { x: 90, y: 595, size: 40, weight: '800', color: '#000000' },
-  originPrice: { x: 620, y: 544, size: 24, weight: '400', color: '#888888', align: 'right', strikeY: 536 },
-  salePrice: { x: 620, y: 598, size: 42, weight: '800', align: 'right' },
+  originPrice: { x: 700, y: 544, size: 24, weight: '400', color: '#888888', align: 'right', strikeY: 536 },
+  salePrice: { x: 700, y: 598, size: 42, weight: '800', align: 'right' },
   discountRate: { x: 690, y: 405, r: 58, size: 34, weight: '900', align: 'center' },
   divider: { x1: 50, y: 622, x2: 750, color: '#c7c7c7' },
   composition: { x: 90, y: 654, size: 20, weight: '400', color: '#777777' }
