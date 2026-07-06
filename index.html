@@ -2090,7 +2090,10 @@ async function renderImagesCanvas(ctx, area, option, db){
   const targetBlockHeight=area.h*TARGET_BLOCK_HEIGHT_RATIO; const baseImageHeight=(targetBlockHeight + verticalOverlap*(rowCount-1))/rowCount;
   let imageIndex=0; const allRows=[];
   for(const count of rows){ const nodes=[]; for(let i=0;i<count;i++){ const data=images[imageIndex++]; if(!data) continue; try{ const img=await loadImage(data.url); const ratio=img.width/img.height; nodes.push({img, key:data.key, w:baseImageHeight*ratio, h:baseImageHeight}); }catch(e){ nodes.push({img:null, key:data?.key||'NO IMAGE', w:baseImageHeight*.7, h:baseImageHeight}); } } allRows.push(nodes); }
-  const horizontalOverlap = maxCountInRow >= 10 ? 10 : OVERLAP_X;
+  // 8개 이상부터 가로 겹침을 더 크게 잡아 누끼가 작아 보이지 않도록 조정
+  let horizontalOverlap = OVERLAP_X;
+  if(maxCountInRow >= 8) horizontalOverlap = 50;
+  else if(maxCountInRow >= 6) horizontalOverlap = 30;
   const rowWidth = nodes => nodes.reduce((s,n)=>s+n.w,0)-horizontalOverlap*(nodes.length-1);
   const maxRowWidth=Math.max(...allRows.map(rowWidth),1); let scale=1; if(maxRowWidth>area.w) scale=area.w/maxRowWidth;
   const scaledBlockHeight=(baseImageHeight*scale)*rowCount-(verticalOverlap*scale)*(rowCount-1); if(scaledBlockHeight>area.h) scale*=area.h/scaledBlockHeight;
