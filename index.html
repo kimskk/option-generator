@@ -323,9 +323,9 @@
       box-shadow:inset 0 0 0 2px #cfd3da;
     }
 
-    #optionsTable th:nth-child(10),#optionsTable td:nth-child(10){min-width:360px}
-    #optionsTable th:nth-child(11),#optionsTable td:nth-child(11){min-width:520px}
-    #optionsTable td:nth-child(10),#optionsTable td:nth-child(11){
+    #optionsTable th:nth-child(11),#optionsTable td:nth-child(11){min-width:360px}
+    #optionsTable th:nth-child(12),#optionsTable td:nth-child(12){min-width:520px}
+    #optionsTable td:nth-child(11),#optionsTable td:nth-child(12){
       white-space:normal;
       text-align:left;
       line-height:1.42;
@@ -539,10 +539,10 @@
     #optionsTable tbody tr{
       position:relative;
       display:grid!important;
-      grid-template-columns:88px 210px 1.15fr 1.35fr .9fr 1fr 1fr 1fr;
+      grid-template-columns:88px 170px 1fr 1.2fr .75fr .85fr .85fr .85fr 190px;
       grid-template-areas:
-        "check color sub title originLabel originPrice saleLabel salePrice"
-        "check compDisplay compDisplay compDisplay compDisplay compParse compParse compParse";
+        "check color sub title originLabel originPrice saleLabel salePrice discount"
+        "check compDisplay compDisplay compDisplay compDisplay compDisplay compParse compParse compParse";
       border:1px solid var(--line);
       border-radius:10px;
       overflow:hidden;
@@ -618,13 +618,14 @@
     #optionsTable td:nth-child(7){grid-area:originPrice}
     #optionsTable td:nth-child(8){grid-area:saleLabel}
     #optionsTable td:nth-child(9){grid-area:salePrice}
-    #optionsTable td:nth-child(10){grid-area:compDisplay}
-    #optionsTable td:nth-child(11){grid-area:compParse}
-    #optionsTable td:nth-child(7),#optionsTable td:nth-child(9){font-weight:900;font-size:17px}
-    #optionsTable td:nth-child(9){border-right:0}
-    #optionsTable td:nth-child(10),#optionsTable td:nth-child(11){border-bottom:0;min-height:64px}
-    #optionsTable td:nth-child(11){border-right:0}
-    #optionsTable td:nth-child(11){
+    #optionsTable td:nth-child(10){grid-area:discount}
+    #optionsTable td:nth-child(11){grid-area:compDisplay}
+    #optionsTable td:nth-child(12){grid-area:compParse}
+    #optionsTable td:nth-child(7),#optionsTable td:nth-child(9),#optionsTable td:nth-child(10){font-weight:900;font-size:17px}
+    #optionsTable td:nth-child(10){border-right:0}
+    #optionsTable td:nth-child(11),#optionsTable td:nth-child(12){border-bottom:0;min-height:64px}
+    #optionsTable td:nth-child(12){border-right:0}
+    #optionsTable td:nth-child(12){
       padding-right:104px;
     }
     #optionsTable tbody tr:hover td{background:#fff}
@@ -665,7 +666,25 @@
       font-size:16px;
       letter-spacing:0;
     }
-    #optionsTable td:nth-child(10),#optionsTable td:nth-child(11){
+
+    /* 할인율 셀: 숫자 입력칸 확보 */
+    #optionsTable td:nth-child(10){
+      padding-left:78px;
+      white-space:nowrap!important;
+      word-break:keep-all;
+      overflow-wrap:normal;
+      justify-content:flex-start;
+      gap:8px;
+    }
+    #optionsTable td:nth-child(10)::before{
+      width:48px;
+    }
+    #optionsTable td:nth-child(10)[contenteditable="true"]{
+      font-size:17px;
+      letter-spacing:0;
+    }
+
+    #optionsTable td:nth-child(11),#optionsTable td:nth-child(12){
       padding-left:104px;
       align-items:center;
     }
@@ -809,11 +828,11 @@
     <table class="sheet" id="optionsTable">
       <colgroup>
         <col style="width:48px"><col style="width:130px"><col style="width:120px"><col style="width:180px"><col style="width:230px">
-        <col style="width:150px"><col style="width:170px"><col style="width:170px"><col style="width:170px">
+        <col style="width:150px"><col style="width:170px"><col style="width:170px"><col style="width:170px"><col style="width:130px">
         <col style="width:360px"><col style="width:520px">
       </colgroup>
       <thead><tr>
-        <th class="select-col"><input type="checkbox" class="head-check" data-table="optionsTable"></th><th>옵션순서</th><th>컬러</th><th>서브텍스트</th><th>메인텍스트</th><th>정상가</th><th>정상가금액</th><th>단독 최저가</th><th>최저가 금액</th><th>구성안내</th><th>누끼배치</th>
+        <th class="select-col"><input type="checkbox" class="head-check" data-table="optionsTable"></th><th>옵션순서</th><th>컬러</th><th>서브텍스트</th><th>메인텍스트</th><th>정상가</th><th>정상가금액</th><th>단독 최저가</th><th>최저가 금액</th><th>할인율</th><th>구성안내</th><th>누끼배치</th>
       </tr></thead>
       <tbody></tbody>
     </table>
@@ -881,12 +900,13 @@ const FIGMA_TEMPLATE = {
   titleBox: { x: 50, y: 4, w: 700, h: 146, r: 10 },
   subText: { x: 400, y: 58, maxW: 620, size: 32, weight: '400', align: 'center' },
   titleText: { x: 400, y: 106, maxW: 620, size: 44, weight: '800', align: 'center' },
-  imageArea: { x: 70, y: 175, w: 660, h: 290 },
+  imageArea: { x: 40, y: 168, w: 720, h: 310 },
   priceBox: { x: 50, y: 490, w: 700, h: 196, r: 20 },
   originLabel: { x: 90, y: 544, size: 22, weight: '400', color: '#888888' },
   saleLabel: { x: 90, y: 595, size: 40, weight: '800', color: '#000000' },
-  originPrice: { x: 710, y: 544, size: 24, weight: '400', color: '#888888', align: 'right', strikeY: 536 },
-  salePrice: { x: 710, y: 598, size: 42, weight: '800', align: 'right' },
+  originPrice: { x: 620, y: 544, size: 24, weight: '400', color: '#888888', align: 'right', strikeY: 536 },
+  salePrice: { x: 620, y: 598, size: 42, weight: '800', align: 'right' },
+  discountRate: { x: 690, y: 405, r: 58, size: 34, weight: '900', align: 'center' },
   divider: { x1: 50, y: 622, x2: 750, color: '#c7c7c7' },
   composition: { x: 90, y: 654, size: 20, weight: '400', color: '#777777' }
 };
@@ -894,11 +914,11 @@ const TEMPLATE_W = FIGMA_TEMPLATE.width;
 const TEMPLATE_H = FIGMA_TEMPLATE.height;
 const OVERLAP_X = 30;
 const OVERLAP_Y = 30;
-const TARGET_BLOCK_HEIGHT_RATIO = 0.82;
-const OPTION_HEADERS = ['option_code','color','sub_text','title_text','original_price_label','origin_price','sale_price_label','sale_price','composition_display','composition_parse'];
+const TARGET_BLOCK_HEIGHT_RATIO = 0.98;
+const OPTION_HEADERS = ['option_code','color','sub_text','title_text','original_price_label','origin_price','sale_price_label','sale_price','discount_rate','composition_display','composition_parse'];
 const DB_HEADERS = ['product_key','product_group','flavor','image_url'];
 const RULE_HEADERS = ['total_qty','row_rule','memo'];
-const OPTION_LABELS = ['옵션순서','컬러','서브텍스트','메인텍스트','정상가','정상가 금액','단독 최저가','최저가 금액','구성안내','누끼배치'];
+const OPTION_LABELS = ['옵션순서','컬러','서브텍스트','메인텍스트','정상가','정상가 금액','단독 최저가','최저가 금액','할인율','구성안내','누끼배치'];
 const DB_LABELS = ['상품키','제품군','맛','이미지 경로'];
 const RULE_LABELS = ['총수량','줄 배치','메모'];
 const PAGE_SIZE = 15;
@@ -1060,10 +1080,18 @@ function formatCurrencyText(value){
   if(!digits) return String(value || '').trim();
   return `${Number(digits).toLocaleString('ko-KR')}원`;
 }
+function formatDiscountText(value){
+  const digits=String(value || '').replace(/[^0-9]/g,'');
+  if(!digits) return '';
+  return `${Number(digits)}%`;
+}
 function formatPriceCell(td){
   const header=getHeaderNameFromCell(td);
   if(header==='origin_price' || header==='sale_price'){
     td.innerText=formatCurrencyText(td.innerText);
+  }
+  if(header==='discount_rate'){
+    td.innerText=formatDiscountText(td.innerText);
   }
 }
 function placeCaretEnd(el){
@@ -1489,7 +1517,7 @@ function syncToolbarByTab(){
   }
 }
 async function initApp(){
-  setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', composition_display:'통살(떡볶이5, 데리야끼5)', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
+  setTableData('optionsTable', OPTION_HEADERS, [{ option_code:'SET 001', color:'#7bafde', sub_text:'서브텍스트 영역', title_text:'메인 텍스트 영역', original_price_label:'정상가', origin_price:'00,000원', sale_price_label:'단독 최저가', sale_price:'00,000원', discount_rate:'', composition_display:'통살(떡볶이5, 데리야끼5)', composition_parse:'통살:떡볶이x5,통살:데리야끼x5' }]);
 
   const savedDb = await loadSavedImageDb();
   setTableData('dbTable', DB_HEADERS, savedDb && savedDb.length ? savedDb : [
@@ -1695,8 +1723,8 @@ function shakeCompositionCell(displayCell){
 function autoConvertCompositionForRow(tr, shouldShake=false, options={}){
   const {showErrors=true, showOk=true} = options;
   const cells = tr?.children ? [...tr.children] : [];
-  const displayCell = cells[9];  // 구성안내
-  const parseCell = cells[10];   // 누끼배치
+  const displayCell = cells[10]; // 구성안내
+  const parseCell = cells[11];   // 누끼배치
   if(!displayCell || !parseCell) return false;
 
   const displayText = String(displayCell.innerText || '').trim();
@@ -1864,17 +1892,21 @@ async function drawTemplate(option, db){
   roundRect(ctx,t.titleBox.x,t.titleBox.y,t.titleBox.w,t.titleBox.h,t.titleBox.r);
   ctx.fill();
 
-  ctx.textAlign=t.subText.align;
-  ctx.fillStyle=hex(option.color,'#ffffff');
-  ctx.font=`${t.subText.weight} ${t.subText.size}px Arial, Pretendard, sans-serif`;
-  ctx.fillText(option.sub_text||'',t.subText.x,t.subText.y);
+  const subText = String(option.sub_text || '').trim();
+  if(subText){
+    ctx.textAlign=t.subText.align;
+    ctx.fillStyle=hex(option.color,'#ffffff');
+    ctx.font=`${t.subText.weight} ${t.subText.size}px Arial, Pretendard, sans-serif`;
+    ctx.fillText(subText,t.subText.x,t.subText.y);
+  }
 
   const title=option.title_text||'';
   const titleSize=fitText(ctx,title,t.titleText.maxW,t.titleText.size,t.titleText.weight);
   ctx.fillStyle='#ffffff';
   ctx.textAlign=t.titleText.align;
   ctx.font=`${t.titleText.weight} ${titleSize}px Arial, Pretendard, sans-serif`;
-  ctx.fillText(title,t.titleText.x,t.titleText.y);
+  const titleY = subText ? t.titleText.y : (t.titleBox.y + t.titleBox.h / 2 + titleSize * 0.35);
+  ctx.fillText(title,t.titleText.x,titleY);
 
   await renderImagesCanvas(ctx, t.imageArea, option, db);
 
@@ -1910,6 +1942,20 @@ async function drawTemplate(option, db){
   ctx.textAlign=t.salePrice.align;
   ctx.fillText(option.sale_price||'', t.salePrice.x, t.salePrice.y);
 
+  const discountText = formatDiscountText(option.discount_rate || '');
+  if(discountText){
+    ctx.fillStyle='#000000';
+    ctx.beginPath();
+    ctx.arc(t.discountRate.x, t.discountRate.y, t.discountRate.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle=hex(option.color,'#ffffff');
+    ctx.font=`${t.discountRate.weight} ${t.discountRate.size}px Arial, Pretendard, sans-serif`;
+    ctx.textAlign=t.discountRate.align;
+    ctx.textBaseline='middle';
+    ctx.fillText(discountText, t.discountRate.x, t.discountRate.y + 2);
+    ctx.textBaseline='alphabetic';
+  }
+
   ctx.strokeStyle=t.divider.color;
   ctx.lineWidth=1;
   ctx.beginPath();
@@ -1933,12 +1979,13 @@ async function renderImagesCanvas(ctx, area, option, db){
   const targetBlockHeight=area.h*TARGET_BLOCK_HEIGHT_RATIO; const baseImageHeight=(targetBlockHeight + verticalOverlap*(rowCount-1))/rowCount;
   let imageIndex=0; const allRows=[];
   for(const count of rows){ const nodes=[]; for(let i=0;i<count;i++){ const data=images[imageIndex++]; if(!data) continue; try{ const img=await loadImage(data.url); const ratio=img.width/img.height; nodes.push({img, key:data.key, w:baseImageHeight*ratio, h:baseImageHeight}); }catch(e){ nodes.push({img:null, key:data?.key||'NO IMAGE', w:baseImageHeight*.7, h:baseImageHeight}); } } allRows.push(nodes); }
-  const rowWidth = nodes => nodes.reduce((s,n)=>s+n.w,0)-OVERLAP_X*(nodes.length-1);
+  const horizontalOverlap = maxCountInRow >= 10 ? 10 : OVERLAP_X;
+  const rowWidth = nodes => nodes.reduce((s,n)=>s+n.w,0)-horizontalOverlap*(nodes.length-1);
   const maxRowWidth=Math.max(...allRows.map(rowWidth),1); let scale=1; if(maxRowWidth>area.w) scale=area.w/maxRowWidth;
   const scaledBlockHeight=(baseImageHeight*scale)*rowCount-(verticalOverlap*scale)*(rowCount-1); if(scaledBlockHeight>area.h) scale*=area.h/scaledBlockHeight;
   allRows.forEach(row=>row.forEach(n=>{n.w*=scale;n.h*=scale;}));
   const finalImageHeight=baseImageHeight*scale; const finalOverlapY=verticalOverlap*scale; const totalBlockHeight=finalImageHeight*rowCount-finalOverlapY*(rowCount-1); let y=area.y+(area.h-totalBlockHeight)/2;
-  for(const row of allRows){ const totalW=rowWidth(row); let x=area.x+(area.w-totalW)/2; for(const n of row){ if(n.img){ ctx.drawImage(n.img,x,y,n.w,n.h); } else { ctx.fillStyle='#ffe1e1'; roundRect(ctx,x,y,n.w,n.h,8); ctx.fill(); ctx.fillStyle='#cc3333'; ctx.textAlign='center'; ctx.font='700 13px Arial'; ctx.fillText('NO IMAGE',x+n.w/2,y+n.h/2-4); ctx.fillText(n.key,x+n.w/2,y+n.h/2+14); } x+=n.w-OVERLAP_X; } y+=finalImageHeight-finalOverlapY; }
+  for(const row of allRows){ const totalW=rowWidth(row); let x=area.x+(area.w-totalW)/2; for(const n of row){ if(n.img){ ctx.drawImage(n.img,x,y,n.w,n.h); } else { ctx.fillStyle='#ffe1e1'; roundRect(ctx,x,y,n.w,n.h,8); ctx.fill(); ctx.fillStyle='#cc3333'; ctx.textAlign='center'; ctx.font='700 13px Arial'; ctx.fillText('NO IMAGE',x+n.w/2,y+n.h/2-4); ctx.fillText(n.key,x+n.w/2,y+n.h/2+14); } x+=n.w-horizontalOverlap; } y+=finalImageHeight-finalOverlapY; }
 }
 
 function readCheckedOptions(){
