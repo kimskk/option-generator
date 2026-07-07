@@ -1026,6 +1026,7 @@ const TEMPLATE_H = FIGMA_TEMPLATE.height;
 const OVERLAP_X = 30;
 const OVERLAP_Y = 30;
 const TARGET_BLOCK_HEIGHT_RATIO = 0.98;
+const EXPORT_SCALE = 2;
 const OPTION_HEADERS = ['option_code','color','sub_text','title_text','original_price_label','origin_price','sale_price_label','sale_price','discount_rate','composition_display','composition_parse'];
 const DB_HEADERS = ['product_key','product_group','flavor','image_url'];
 const RULE_HEADERS = ['total_qty','row_rule','memo'];
@@ -2211,15 +2212,30 @@ function clearEmptyRowsActive(){
   toast(removed ? `${removed}개 빈 행 정리 완료` : '정리할 빈 행이 없습니다');
 }
 
+function setupHighQualityCanvas(ctx){
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+}
+
 function combineCanvasesVertical(canvases){
+  const totalHeight = canvases.reduce((sum, canvas) => sum + canvas.height, 0);
   const combined=document.createElement('canvas');
-  combined.width=TEMPLATE_W;
-  combined.height=canvases.reduce((sum, canvas) => sum + canvas.height, 0);
+  combined.width = TEMPLATE_W * EXPORT_SCALE;
+  combined.height = totalHeight * EXPORT_SCALE;
+  combined.style.width = `${TEMPLATE_W}px`;
+  combined.style.height = `${totalHeight}px`;
+
   const ctx=combined.getContext('2d');
+  ctx.scale(EXPORT_SCALE, EXPORT_SCALE);
+  setupHighQualityCanvas(ctx);
   ctx.fillStyle='#fff';
-  ctx.fillRect(0,0,combined.width,combined.height);
+  ctx.fillRect(0,0,TEMPLATE_W,totalHeight);
+
   let y = 0;
-  canvases.forEach(canvas => { ctx.drawImage(canvas,0,y); y += canvas.height; });
+  canvases.forEach(canvas => {
+    ctx.drawImage(canvas,0,y,canvas.width,canvas.height);
+    y += canvas.height;
+  });
   return combined;
 }
 function clearGenerated(){
@@ -2315,11 +2331,17 @@ function getInstagramRects(count){
 }
 function composeInstagramPage(canvases){
   const page=document.createElement('canvas');
-  page.width=1080;
-  page.height=1350;
+  page.width = 1080 * EXPORT_SCALE;
+  page.height = 1350 * EXPORT_SCALE;
+  page.style.width = '1080px';
+  page.style.height = '1350px';
+
   const ctx=page.getContext('2d');
+  ctx.scale(EXPORT_SCALE, EXPORT_SCALE);
+  setupHighQualityCanvas(ctx);
   ctx.fillStyle='#fff';
-  ctx.fillRect(0,0,page.width,page.height);
+  ctx.fillRect(0,0,1080,1350);
+
   const rects=getInstagramRects(canvases.length);
   canvases.forEach((canvas, i)=>drawCanvasContain(ctx, canvas, rects[i].x, rects[i].y, rects[i].w, rects[i].h));
   return page;
@@ -2341,7 +2363,7 @@ async function generateInstagram(){
     const canvas=composeInstagramPage(chunk);
     const name=`instagram_${String(i+1).padStart(2,'0')}`;
     generated.push({name, canvas});
-    appendPreviewCard(canvas, name, `1080×1350 / ${chunk.length}개 배치`);
+    appendPreviewCard(canvas, name, `2160×2700 / ${chunk.length}개 배치`);
   });
   toast(`인스타이미지 ${chunks.length}장 생성 완료 · ${instagramRuleText(options.length)}`);
 }
