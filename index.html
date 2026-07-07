@@ -2084,22 +2084,88 @@ async function drawTemplate(option, db){
 async function renderImagesCanvas(ctx, area, option, db){
   const images = await resolveImages(option, db);
   if(!images.length) return;
+
+  // 3행 금지: 어떤 수량이든 최대 2행으로만 배치
   let rows = getRuleForTotal(images.length);
   if(!rows.length) rows=[images.length];
-  const rowCount=rows.length; const maxCountInRow=Math.max(...rows); const verticalOverlap=rowCount>1 ? (maxCountInRow>=10?0:OVERLAP_Y) : 0;
-  const targetBlockHeight=area.h*TARGET_BLOCK_HEIGHT_RATIO; const baseImageHeight=(targetBlockHeight + verticalOverlap*(rowCount-1))/rowCount;
-  let imageIndex=0; const allRows=[];
-  for(const count of rows){ const nodes=[]; for(let i=0;i<count;i++){ const data=images[imageIndex++]; if(!data) continue; try{ const img=await loadImage(data.url); const ratio=img.width/img.height; nodes.push({img, key:data.key, w:baseImageHeight*ratio, h:baseImageHeight}); }catch(e){ nodes.push({img:null, key:data?.key||'NO IMAGE', w:baseImageHeight*.7, h:baseImageHeight}); } } allRows.push(nodes); }
-  // 8개 이상부터 가로 겹침을 더 크게 잡아 누끼가 작아 보이지 않도록 조정
-  let horizontalOverlap = OVERLAP_X;
-  if(maxCountInRow >= 8) horizontalOverlap = 50;
-  else if(maxCountInRow >= 6) horizontalOverlap = 30;
-  const rowWidth = nodes => nodes.reduce((s,n)=>s+n.w,0)-horizontalOverlap*(nodes.length-1);
-  const maxRowWidth=Math.max(...allRows.map(rowWidth),1); let scale=1; if(maxRowWidth>area.w) scale=area.w/maxRowWidth;
-  const scaledBlockHeight=(baseImageHeight*scale)*rowCount-(verticalOverlap*scale)*(rowCount-1); if(scaledBlockHeight>area.h) scale*=area.h/scaledBlockHeight;
-  allRows.forEach(row=>row.forEach(n=>{n.w*=scale;n.h*=scale;}));
-  const finalImageHeight=baseImageHeight*scale; const finalOverlapY=verticalOverlap*scale; const totalBlockHeight=finalImageHeight*rowCount-finalOverlapY*(rowCount-1); let y=area.y+(area.h-totalBlockHeight)/2;
-  for(const row of allRows){ const totalW=rowWidth(row); let x=area.x+(area.w-totalW)/2; for(const n of row){ if(n.img){ ctx.drawImage(n.img,x,y,n.w,n.h); } else { ctx.fillStyle='#ffe1e1'; roundRect(ctx,x,y,n.w,n.h,8); ctx.fill(); ctx.fillStyle='#cc3333'; ctx.textAlign='center'; ctx.font='700 13px Arial'; ctx.fillText('NO IMAGE',x+n.w/2,y+n.h/2-4); ctx.fillText(n.key,x+n.w/2,y+n.h/2+14); } x+=n.w-horizontalOverlap; } y+=finalImageHeight-finalOverlapY; }
+  if(rows.length > 2){
+    const top = Math.ceil(images.length / 2);
+    rows = [top, images.length - top].filter(Boolean);
+  }
+
+  const rowCount = rows.length;
+  const maxCountInRow = Math.max(...rows);
+  const verticalOverlap = rowCount > 1 ? (maxCountInRow >= 10 ? 0 : OVERLAP_Y) : 0;
+  const targetBlockHeight = area.h * TARGET_BLOCK_HEIGHT_RATIO;
+  const baseImageHeight = (targetBlockHeight + verticalOverlap * (rowCount - 1)) / rowCount;
+
+  let imageIndex = 0;
+  const allRows = [];
+  for(const count of rows){
+    const nodes = [];
+    for(let i = 0; i < count; i++){
+      const data = images[imageIndex++];
+      if(!data) continue;
+      try{
+        const img = await loadImage(data.url);
+        const ratio = img.width / img.height;
+        nodes.push({img, key:data.key, w:baseImageHeight * ratio, h:baseImageHeight});
+      }catch(e){
+        nodes.push({img:null, key:data?.key || 'NO IMAGE', w:baseImageHeight * .7, h:baseImageHeight});
+      }
+    }
+    allRows.push(nodes);
+  }
+
+  // 제품이 섞여서 폭이 길어질 때 전체를 줄이지 말고, 해당 행만 더 겹쳐서 크게 유지
+  const getRowOverlap = (nodes) => {
+    if(nodes.length <= 1) return 0;
+    const baseOverlap = nodes.length >= 8 ? 50 : (nodes.length >= 6 ? 30 : OVERLAP_X);
+    const sumW = nodes.reduce((s, n) => s + n.w, 0);
+    const needed = Math.ceil((sumW - area.w) / (nodes.length - 1));
+    return Math.max(baseOverlap, Math.min(120, needed));
+  };
+
+  const rowOverlaps = allRows.map(getRowOverlap);
+  const rowWidth = (nodes, overlap) => nodes.reduce((s,n)=>s+n.w,0) - overlap * Math.max(0, nodes.length - 1);
+
+  const maxRowWidth = Math.max(...allRows.map((row, i) => rowWidth(row, rowOverlaps[i])), 1);
+  let scale = 1;
+  if(maxRowWidth > area.w) scale = area.w / maxRowWidth;
+
+  const scaledBlockHeight = (baseImageHeight * scale) * rowCount - (verticalOverlap * scale) * (rowCount - 1);
+  if(scaledBlockHeight > area.h) scale *= area.h / scaledBlockHeight;
+
+  allRows.forEach(row => row.forEach(n => { n.w *= scale; n.h *= scale; }));
+
+  const finalImageHeight = baseImageHeight * scale;
+  const finalOverlapY = verticalOverlap * scale;
+  const totalBlockHeight = finalImageHeight * rowCount - finalOverlapY * (rowCount - 1);
+  let y = area.y + (area.h - totalBlockHeight) / 2;
+
+  for(let r = 0; r < allRows.length; r++){
+    const row = allRows[r];
+    const overlap = rowOverlaps[r] * scale;
+    const totalW = rowWidth(row, overlap);
+    let x = area.x + (area.w - totalW) / 2;
+
+    for(const n of row){
+      if(n.img){
+        ctx.drawImage(n.img, x, y, n.w, n.h);
+      } else {
+        ctx.fillStyle = '#ffe1e1';
+        roundRect(ctx, x, y, n.w, n.h, 8);
+        ctx.fill();
+        ctx.fillStyle = '#cc3333';
+        ctx.textAlign = 'center';
+        ctx.font = '700 13px Arial';
+        ctx.fillText('NO IMAGE', x + n.w / 2, y + n.h / 2 - 4);
+        ctx.fillText(n.key, x + n.w / 2, y + n.h / 2 + 14);
+      }
+      x += n.w - overlap;
+    }
+    y += finalImageHeight - finalOverlapY;
+  }
 }
 
 function readCheckedOptions(){
