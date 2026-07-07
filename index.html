@@ -1030,11 +1030,12 @@ const EXPORT_SCALE = 2;
 const DETAIL_NOTICE = {
   h: 156,
   bg: '#1f1f1f',
-  padX: 54,
+  padX: 90,
   titleY: 48,
+  titleX: 90,
   bulletStartY: 86,
   bulletGap: 28,
-  iconX: 32,
+  iconX: 62,
   iconY: 42,
   iconR: 11,
   title: '꼭 알아두세요',
@@ -2262,7 +2263,7 @@ function drawDetailNotice(ctx, y, width){
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#ffffff';
   ctx.font = '900 24px Arial, Pretendard, sans-serif';
-  ctx.fillText(n.title, n.padX, y + n.titleY);
+  ctx.fillText(n.title, n.titleX || n.padX, y + n.titleY);
 
   ctx.fillStyle = '#eeeeee';
   ctx.font = '400 17px Arial, Pretendard, sans-serif';
