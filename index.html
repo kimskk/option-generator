@@ -1991,13 +1991,21 @@ async function drawTemplate(option, db){
   const compLines = wrapTextLines(measureCtx, option.composition_display || '', compMaxWidth);
   const extraHeight = Math.max(0, compLines.length - 1) * compLineHeight;
   const canvas=document.createElement('canvas');
-  canvas.width=t.width;
-  canvas.height=t.height + extraHeight;
+  const logicalWidth = t.width;
+  const logicalHeight = t.height + extraHeight;
+  canvas.width = logicalWidth * EXPORT_SCALE;
+  canvas.height = logicalHeight * EXPORT_SCALE;
+  canvas.style.width = `${logicalWidth}px`;
+  canvas.style.height = `${logicalHeight}px`;
+  canvas.dataset.exportBaseWidth = logicalWidth;
+  canvas.dataset.exportBaseHeight = logicalHeight;
   const ctx=canvas.getContext('2d');
+  setupHighQualityCanvas(ctx);
+  ctx.scale(EXPORT_SCALE, EXPORT_SCALE);
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,logicalWidth,logicalHeight);
   ctx.fillStyle=t.background;
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0,0,logicalWidth,logicalHeight);
 
   // Figma OPTION_TEMPLATE coded guide
   ctx.fillStyle='#000000';
@@ -2218,12 +2226,18 @@ function setupHighQualityCanvas(ctx){
 }
 
 function combineCanvasesVertical(canvases){
-  const totalHeight = canvases.reduce((sum, canvas) => sum + canvas.height, 0);
+  const totalHeight = canvases.reduce((sum, canvas) => {
+    const h = canvas.dataset && canvas.dataset.exportBaseHeight ? Number(canvas.dataset.exportBaseHeight) : canvas.height;
+    return sum + h;
+  }, 0);
+
   const combined=document.createElement('canvas');
   combined.width = TEMPLATE_W * EXPORT_SCALE;
   combined.height = totalHeight * EXPORT_SCALE;
   combined.style.width = `${TEMPLATE_W}px`;
   combined.style.height = `${totalHeight}px`;
+  combined.dataset.exportBaseWidth = TEMPLATE_W;
+  combined.dataset.exportBaseHeight = totalHeight;
 
   const ctx=combined.getContext('2d');
   ctx.scale(EXPORT_SCALE, EXPORT_SCALE);
@@ -2233,8 +2247,10 @@ function combineCanvasesVertical(canvases){
 
   let y = 0;
   canvases.forEach(canvas => {
-    ctx.drawImage(canvas,0,y,canvas.width,canvas.height);
-    y += canvas.height;
+    const w = canvas.dataset && canvas.dataset.exportBaseWidth ? Number(canvas.dataset.exportBaseWidth) : canvas.width;
+    const h = canvas.dataset && canvas.dataset.exportBaseHeight ? Number(canvas.dataset.exportBaseHeight) : canvas.height;
+    ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, y, w, h);
+    y += h;
   });
   return combined;
 }
@@ -2335,6 +2351,8 @@ function composeInstagramPage(canvases){
   page.height = 1350 * EXPORT_SCALE;
   page.style.width = '1080px';
   page.style.height = '1350px';
+  page.dataset.exportBaseWidth = 1080;
+  page.dataset.exportBaseHeight = 1350;
 
   const ctx=page.getContext('2d');
   ctx.scale(EXPORT_SCALE, EXPORT_SCALE);
@@ -2367,7 +2385,20 @@ async function generateInstagram(){
   });
   toast(`인스타이미지 ${chunks.length}장 생성 완료 · ${instagramRuleText(options.length)}`);
 }
-function downloadCanvas(canvas, filename){ const a=document.createElement('a'); a.download=filename; a.href=canvas.toDataURL('image/png'); a.click(); }
+
+function canvasForDownload(canvas){
+  const out=document.createElement('canvas');
+  const w = canvas.dataset && canvas.dataset.exportBaseWidth ? Number(canvas.dataset.exportBaseWidth) : canvas.width;
+  const h = canvas.dataset && canvas.dataset.exportBaseHeight ? Number(canvas.dataset.exportBaseHeight) : canvas.height;
+  out.width = w;
+  out.height = h;
+  const ctx=out.getContext('2d');
+  setupHighQualityCanvas(ctx);
+  ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, w, h);
+  return out;
+}
+
+function downloadCanvas(canvas, filename){ const a=document.createElement('a'); const exportCanvas=canvasForDownload(canvas); a.download=filename; a.href=exportCanvas.toDataURL('image/png'); a.click(); }
 function downloadAll(){
   if(!generated.length){ toast('생성된 이미지 없음'); return; }
   generated.forEach((item, index)=>setTimeout(()=>downloadCanvas(item.canvas, `${item.name}.png`), index*180));
