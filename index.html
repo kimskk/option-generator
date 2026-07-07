@@ -898,6 +898,51 @@
       border-radius:8px!important;
     }
 
+
+/* v1.1 편의성: 상단 툴바 반응형 줄바꿈 */
+.toolbar{
+  height:auto!important;
+  min-height:68px!important;
+  flex-wrap:wrap!important;
+  overflow-x:visible!important;
+  align-items:center!important;
+  row-gap:10px!important;
+}
+
+.toolbar .hint{
+  flex:1 1 520px!important;
+  min-width:360px!important;
+  white-space:normal!important;
+  line-height:1.45!important;
+  margin-left:8px!important;
+}
+
+.toolbar-spacer{
+  flex:1 1 24px!important;
+  min-width:24px!important;
+}
+
+.toolbar .mini,
+.toolbar .toolbar-input,
+.toolbar .toolbar-select{
+  flex:0 0 auto!important;
+}
+
+@media (max-width: 1500px){
+  .toolbar{
+    padding:12px 24px!important;
+  }
+  .toolbar .hint{
+    order:10!important;
+    flex:1 1 100%!important;
+    min-width:0!important;
+    margin-left:0!important;
+  }
+  .toolbar-spacer{
+    display:none!important;
+  }
+}
+
 </style>
 </head>
 <body>
