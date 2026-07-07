@@ -1027,6 +1027,22 @@ const OVERLAP_X = 30;
 const OVERLAP_Y = 30;
 const TARGET_BLOCK_HEIGHT_RATIO = 0.98;
 const EXPORT_SCALE = 2;
+const DETAIL_NOTICE = {
+  h: 156,
+  bg: '#1f1f1f',
+  padX: 54,
+  titleY: 48,
+  bulletStartY: 86,
+  bulletGap: 28,
+  iconX: 32,
+  iconY: 42,
+  iconR: 11,
+  title: '꼭 알아두세요',
+  bullets: [
+    '해당 이벤트는 당사 사정에 따라 사전 고지 없이 변경 및 종료될 수 있습니다.',
+    '한정 수량으로 진행되는 이벤트로 수량 마감 시 자동으로 종료됩니다.'
+  ]
+};
 const OPTION_HEADERS = ['option_code','color','sub_text','title_text','original_price_label','origin_price','sale_price_label','sale_price','discount_rate','composition_display','composition_parse'];
 const DB_HEADERS = ['product_key','product_group','flavor','image_url'];
 const RULE_HEADERS = ['total_qty','row_rule','memo'];
@@ -2225,11 +2241,43 @@ function setupHighQualityCanvas(ctx){
   ctx.imageSmoothingQuality = 'high';
 }
 
-function combineCanvasesVertical(canvases){
-  const totalHeight = canvases.reduce((sum, canvas) => {
+function drawDetailNotice(ctx, y, width){
+  const n = DETAIL_NOTICE;
+  ctx.save();
+  ctx.fillStyle = n.bg;
+  ctx.fillRect(0, y, width, n.h);
+
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(n.iconX, y + n.iconY, n.iconR, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 18px Arial, Pretendard, sans-serif';
+  ctx.fillText('!', n.iconX, y + n.iconY + 1);
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 24px Arial, Pretendard, sans-serif';
+  ctx.fillText(n.title, n.padX, y + n.titleY);
+
+  ctx.fillStyle = '#eeeeee';
+  ctx.font = '400 17px Arial, Pretendard, sans-serif';
+  n.bullets.forEach((line, i) => {
+    ctx.fillText(`· ${line}`, n.padX, y + n.bulletStartY + i * n.bulletGap);
+  });
+  ctx.restore();
+}
+
+function combineCanvasesVertical(canvases, includeNotice=false){
+  const contentHeight = canvases.reduce((sum, canvas) => {
     const h = canvas.dataset && canvas.dataset.exportBaseHeight ? Number(canvas.dataset.exportBaseHeight) : canvas.height;
     return sum + h;
   }, 0);
+  const totalHeight = contentHeight + (includeNotice ? DETAIL_NOTICE.h : 0);
 
   const combined=document.createElement('canvas');
   combined.width = TEMPLATE_W * EXPORT_SCALE;
@@ -2252,6 +2300,7 @@ function combineCanvasesVertical(canvases){
     ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, y, w, h);
     y += h;
   });
+  if(includeNotice) drawDetailNotice(ctx, y, TEMPLATE_W);
   return combined;
 }
 function clearGenerated(){
@@ -2286,7 +2335,7 @@ async function generateDetail(){
   if(!options.length){ toast('생성할 행을 체크해줘'); return; }
   const canvases=[];
   for(const option of options){ canvases.push(await drawTemplate(option, db)); }
-  const combined=combineCanvasesVertical(canvases);
+  const combined=combineCanvasesVertical(canvases, true);
   generated.push({name:'detail_selected_combined', canvas:combined});
   appendPreviewCard(combined, 'detail_selected_combined', `${options.length}개 선택 세트 전체`);
   toast(`${options.length}개 옵션 상세이미지 생성 완료`);
