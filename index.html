@@ -1070,7 +1070,7 @@ const TEMPLATE_W = FIGMA_TEMPLATE.width;
 const TEMPLATE_H = FIGMA_TEMPLATE.height;
 const OVERLAP_X = 30;
 const OVERLAP_Y = 30;
-const TARGET_BLOCK_HEIGHT_RATIO = 0.98;
+const TARGET_BLOCK_HEIGHT_RATIO = 0.91;
 const EXPORT_SCALE = 2;
 const DETAIL_NOTICE = {
   h: 156,
@@ -2170,6 +2170,15 @@ async function renderImagesCanvas(ctx, area, option, db){
   const images = await resolveImages(option, db);
   if(!images.length) return;
 
+  // 이미지 영역 안쪽 안전 여백
+  const SAFE_X = 10;
+  const drawArea = {
+    x: area.x + SAFE_X,
+    y: area.y,
+    w: area.w - SAFE_X * 2,
+    h: area.h
+  };
+
   // 3행 금지: 어떤 수량이든 최대 2행으로만 배치
   let rows = getRuleForTotal(images.length);
   if(!rows.length) rows=[images.length];
@@ -2181,7 +2190,7 @@ async function renderImagesCanvas(ctx, area, option, db){
   const rowCount = rows.length;
   const maxCountInRow = Math.max(...rows);
   const verticalOverlap = rowCount > 1 ? (maxCountInRow >= 10 ? 0 : OVERLAP_Y) : 0;
-  const targetBlockHeight = area.h * TARGET_BLOCK_HEIGHT_RATIO;
+  const targetBlockHeight = drawArea.h * TARGET_BLOCK_HEIGHT_RATIO;
   const baseImageHeight = (targetBlockHeight + verticalOverlap * (rowCount - 1)) / rowCount;
 
   let imageIndex = 0;
@@ -2207,7 +2216,7 @@ async function renderImagesCanvas(ctx, area, option, db){
     if(nodes.length <= 1) return 0;
     const baseOverlap = nodes.length >= 8 ? 50 : (nodes.length >= 6 ? 30 : OVERLAP_X);
     const sumW = nodes.reduce((s, n) => s + n.w, 0);
-    const needed = Math.ceil((sumW - area.w) / (nodes.length - 1));
+    const needed = Math.ceil((sumW - drawArea.w) / (nodes.length - 1));
     return Math.max(baseOverlap, Math.min(120, needed));
   };
 
@@ -2216,23 +2225,23 @@ async function renderImagesCanvas(ctx, area, option, db){
 
   const maxRowWidth = Math.max(...allRows.map((row, i) => rowWidth(row, rowOverlaps[i])), 1);
   let scale = 1;
-  if(maxRowWidth > area.w) scale = area.w / maxRowWidth;
+  if(maxRowWidth > drawArea.w) scale = drawArea.w / maxRowWidth;
 
   const scaledBlockHeight = (baseImageHeight * scale) * rowCount - (verticalOverlap * scale) * (rowCount - 1);
-  if(scaledBlockHeight > area.h) scale *= area.h / scaledBlockHeight;
+  if(scaledBlockHeight > drawArea.h) scale *= drawArea.h / scaledBlockHeight;
 
   allRows.forEach(row => row.forEach(n => { n.w *= scale; n.h *= scale; }));
 
   const finalImageHeight = baseImageHeight * scale;
   const finalOverlapY = verticalOverlap * scale;
   const totalBlockHeight = finalImageHeight * rowCount - finalOverlapY * (rowCount - 1);
-  let y = area.y + (area.h - totalBlockHeight) / 2;
+  let y = drawArea.y + (drawArea.h - totalBlockHeight) / 2;
 
   for(let r = 0; r < allRows.length; r++){
     const row = allRows[r];
     const overlap = rowOverlaps[r] * scale;
     const totalW = rowWidth(row, overlap);
-    let x = area.x + (area.w - totalW) / 2;
+    let x = drawArea.x + (drawArea.w - totalW) / 2;
 
     for(const n of row){
       if(n.img){
