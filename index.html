@@ -1055,16 +1055,16 @@ const FIGMA_TEMPLATE = {
   background: '#ffffff',
   titleBox: { x: 50, y: 4, w: 700, h: 146, r: 10 },
   subText: { x: 400, y: 58, maxW: 620, size: 32, weight: '400', align: 'center' },
-  titleText: { x: 400, y: 106, maxW: 620, size: 44, weight: '800', align: 'center' },
+  titleText: { x: 400, y: 106, maxW: 620, size: 42, weight: '600', align: 'center' },
   imageArea: { x: 40, y: 168, w: 720, h: 310 },
   priceBox: { x: 50, y: 490, w: 700, h: 196, r: 20 },
-  originLabel: { x: 90, y: 544, size: 22, weight: '400', color: '#888888' },
-  saleLabel: { x: 90, y: 595, size: 40, weight: '800', color: '#000000' },
-  originPrice: { x: 700, y: 544, size: 24, weight: '400', color: '#888888', align: 'right', strikeY: 536 },
-  salePrice: { x: 700, y: 598, size: 42, weight: '800', align: 'right' },
+  originLabel: { x: 90, y: 544, size: 25, weight: '400', color: '#888888' },
+  saleLabel: { x: 90, y: 595, size: 38, weight: '700', color: '#000000' },
+  originPrice: { x: 700, y: 544, size: 25, weight: '400', color: '#888888', align: 'right', strikeY: 536 },
+  salePrice: { x: 700, y: 598, size: 38, weight: '700', align: 'right' },
   discountRate: { x: 690, y: 405, r: 58, size: 34, weight: '900', align: 'center' },
   divider: { x1: 50, y: 622, x2: 750, color: '#c7c7c7' },
-  composition: { x: 90, y: 654, size: 20, weight: '400', color: '#777777' }
+  composition: { x: 90, y: 654, size: 20, weight: '400', color: '#777777', letterSpacingEm: -0.04, lineHeight: 28 }
 };
 const TEMPLATE_W = FIGMA_TEMPLATE.width;
 const TEMPLATE_H = FIGMA_TEMPLATE.height;
@@ -2017,8 +2017,13 @@ async function resolveImages(option, db){
 }
 
 function roundRect(ctx,x,y,w,h,r){ const rr=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath(); }
-function fitText(ctx, text, maxWidth, startSize, weight='800'){ let size=startSize; do{ ctx.font=`${weight} ${size}px Arial, Pretendard, sans-serif`; if(ctx.measureText(text).width<=maxWidth) return size; size-=2; }while(size>16); return size; }
-function wrapTextLines(ctx, text, maxWidth){
+function fitText(ctx, text, maxWidth, startSize, weight='800'){ let size=startSize; do{ ctx.font=`${weight} ${size}px 'Pretendard', Arial, sans-serif`; if(ctx.measureText(text).width<=maxWidth) return size; size-=2; }while(size>16); return size; }
+function measureTextWithSpacing(ctx, text, letterSpacingPx=0){
+  const chars = [...String(text || '')];
+  if(!chars.length) return 0;
+  return chars.reduce((sum, ch) => sum + ctx.measureText(ch).width, 0) + letterSpacingPx * Math.max(0, chars.length - 1);
+}
+function wrapTextLines(ctx, text, maxWidth, letterSpacingPx=0){
   text = String(text || '').trim();
   if(!text) return [''];
   const hardLines = text.split(/\n/);
@@ -2028,7 +2033,7 @@ function wrapTextLines(ctx, text, maxWidth){
     const chars = [...hardLine];
     for(const ch of chars){
       const test = current + ch;
-      if(current && ctx.measureText(test).width > maxWidth){
+      if(current && measureTextWithSpacing(ctx, test, letterSpacingPx) > maxWidth){
         lines.push(current.trimEnd());
         current = ch;
       } else {
@@ -2039,18 +2044,27 @@ function wrapTextLines(ctx, text, maxWidth){
   }
   return lines.length ? lines : [''];
 }
-function drawWrappedText(ctx, lines, x, y, lineHeight){
-  lines.forEach((line, i) => ctx.fillText(line, x, y + i * lineHeight));
+function fillTextWithSpacing(ctx, text, x, y, letterSpacingPx=0){
+  const chars = [...String(text || '')];
+  let cursorX = x;
+  for(const ch of chars){
+    ctx.fillText(ch, cursorX, y);
+    cursorX += ctx.measureText(ch).width + letterSpacingPx;
+  }
+}
+function drawWrappedText(ctx, lines, x, y, lineHeight, letterSpacingPx=0){
+  lines.forEach((line, i) => fillTextWithSpacing(ctx, line, x, y + i * lineHeight, letterSpacingPx));
 }
 
 async function drawTemplate(option, db){
   const t = FIGMA_TEMPLATE;
   const measureCanvas=document.createElement('canvas');
   const measureCtx=measureCanvas.getContext('2d');
-  const compLineHeight = 28;
+  const compLineHeight = t.composition.lineHeight;
   const compMaxWidth = 620;
-  measureCtx.font=`${t.composition.weight} ${t.composition.size}px Arial, Pretendard, sans-serif`;
-  const compLines = wrapTextLines(measureCtx, option.composition_display || '', compMaxWidth);
+  measureCtx.font=`${t.composition.weight} ${t.composition.size}px 'Pretendard', Arial, sans-serif`;
+  const compLetterSpacing = t.composition.size * t.composition.letterSpacingEm;
+  const compLines = wrapTextLines(measureCtx, option.composition_display || '', compMaxWidth, compLetterSpacing);
   const extraHeight = Math.max(0, compLines.length - 1) * compLineHeight;
   const canvas=document.createElement('canvas');
   const logicalWidth = t.width;
@@ -2078,7 +2092,7 @@ async function drawTemplate(option, db){
   if(subText){
     ctx.textAlign=t.subText.align;
     ctx.fillStyle=hex(option.color,'#ffffff');
-    ctx.font=`${t.subText.weight} ${t.subText.size}px Arial, Pretendard, sans-serif`;
+    ctx.font=`${t.subText.weight} ${t.subText.size}px 'Pretendard', Arial, sans-serif`;
     ctx.fillText(subText,t.subText.x,t.subText.y);
   }
 
@@ -2086,7 +2100,7 @@ async function drawTemplate(option, db){
   const titleSize=fitText(ctx,title,t.titleText.maxW,t.titleText.size,t.titleText.weight);
   ctx.fillStyle='#ffffff';
   ctx.textAlign=t.titleText.align;
-  ctx.font=`${t.titleText.weight} ${titleSize}px Arial, Pretendard, sans-serif`;
+  ctx.font=`${t.titleText.weight} ${titleSize}px 'Pretendard', Arial, sans-serif`;
   const titleY = subText ? t.titleText.y : (t.titleBox.y + t.titleBox.h / 2 + titleSize * 0.35);
   ctx.fillText(title,t.titleText.x,titleY);
 
@@ -2099,16 +2113,16 @@ async function drawTemplate(option, db){
 
   ctx.textAlign='left';
   ctx.fillStyle=t.originLabel.color;
-  ctx.font=`${t.originLabel.weight} ${t.originLabel.size}px Arial, Pretendard, sans-serif`;
+  ctx.font=`${t.originLabel.weight} ${t.originLabel.size}px 'Pretendard', Arial, sans-serif`;
   ctx.fillText(option.original_price_label||'', t.originLabel.x, t.originLabel.y);
 
   ctx.fillStyle=t.saleLabel.color;
-  ctx.font=`${t.saleLabel.weight} ${t.saleLabel.size}px Arial, Pretendard, sans-serif`;
+  ctx.font=`${t.saleLabel.weight} ${t.saleLabel.size}px 'Pretendard', Arial, sans-serif`;
   ctx.fillText(option.sale_price_label||'', t.saleLabel.x, t.saleLabel.y);
 
   ctx.textAlign=t.originPrice.align;
   ctx.fillStyle=t.originPrice.color;
-  ctx.font=`${t.originPrice.weight} ${t.originPrice.size}px Arial, Pretendard, sans-serif`;
+  ctx.font=`${t.originPrice.weight} ${t.originPrice.size}px 'Pretendard', Arial, sans-serif`;
   const op=option.origin_price||'';
   ctx.fillText(op, t.originPrice.x, t.originPrice.y);
   const opM=ctx.measureText(op);
@@ -2120,7 +2134,7 @@ async function drawTemplate(option, db){
   ctx.stroke();
 
   ctx.fillStyle=hex(option.color,'#000000');
-  ctx.font=`${t.salePrice.weight} ${t.salePrice.size}px Arial, Pretendard, sans-serif`;
+  ctx.font=`${t.salePrice.weight} ${t.salePrice.size}px 'Pretendard', Arial, sans-serif`;
   ctx.textAlign=t.salePrice.align;
   ctx.fillText(option.sale_price||'', t.salePrice.x, t.salePrice.y);
 
@@ -2147,8 +2161,8 @@ async function drawTemplate(option, db){
 
   ctx.textAlign='left';
   ctx.fillStyle=t.composition.color;
-  ctx.font=`${t.composition.weight} ${t.composition.size}px Arial, Pretendard, sans-serif`;
-  drawWrappedText(ctx, compLines, t.composition.x, t.composition.y, compLineHeight);
+  ctx.font=`${t.composition.weight} ${t.composition.size}px 'Pretendard', Arial, sans-serif`;
+  drawWrappedText(ctx, compLines, t.composition.x, t.composition.y, compLineHeight, compLetterSpacing);
   return canvas;
 }
 
